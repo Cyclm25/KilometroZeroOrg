@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kilometro Zero Organization Incorporated</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --red:#a00021;
+    --red-dark:#720017;
+    --red-light:#c8102e;
+    --gold:#c8a45d;
+    --dark:#171717;
+    --text:#3f3f46;
+    --muted:#71717a;
+    --soft:#f7f3ef;
+    --white:#ffffff;
+    --border:#e7ddd6;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+#mission{
+    background:#212020; 
+}
+#legal{
+    background:#fcf4f4;
+}
+
+#founder {
+    background:  #ffffff;
+
+}
+html{
+    scroll-behavior:smooth;
+}
+
+html,
+body{
+    overflow-x:hidden;
+}
+
+body{
+    font-family:"Inter",sans-serif;
+    background:var(--soft);
+    color:var(--text);
+    line-height:1.7;
+}
+
+nav{
+    position:fixed;
+    top:0;
+    width:100%;
+    height:82px;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 8%;
+    background:rgba(255,255,255,0.94);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--border);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-decoration:none;
+    color:var(--dark);
+}
+
+.brand-logo{
+    width:70px;
+    height:42px;
+    object-fit:cover;
+    object-position:left center;
+    mix-blend-mode:multiply;
+}
+
+.brand:hover .brand-logo{
+    transform:translateY(-2px);
+}
+
+.brand-text{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+}
+
+
+.brand h3{
+    font-family:"Cormorant Garamond",serif;
+    font-size:1.55rem;
+    line-height:1;
+    color:var(--red);
+}
+.brand span{
+    font-size:0.65rem;
+    text-transform:uppercase;
+    letter-spacing:2.5px;
+    color:var(--muted);
+}
+.nav-links{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    list-style:none;
+}
+
+.nav-links a{
+    text-decoration:none;
+    color:var(--dark);
+    font-size:0.88rem;
+    font-weight:600;
+}
+
+.nav-links a:hover{
+    color:var(--red);
+}
+
+.nav-btn{
+    background:var(--red);
+    color:white!important;
+    padding:10px 18px;
+    border-radius:2px;
+}
+
+.menu{
+    display:none;
+    font-size:1.8rem;
+    cursor:pointer;
+}
+
+.hero{
+    min-height:calc(100vh - 82px);
+    margin-top:82px;
+    padding-top:60px;
+    padding-bottom:90px;
+    background:
+    
+        linear-gradient(
+            rgba(15,15,15,0.62),
+            rgba(15,15,15,0.70)
+        ),
+        url("Kilometro - Landing.jpg") center 38% / cover no-repeat;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:white;
+    position:relative;
+}
+section{
+    scroll-margin-top:82px;
+}
+.hero-content{
+    max-width:850px;
+    padding:0 7%;
+    margin-top:0;
+    position:relative;
+    z-index:3;
+}
+
+.hero-badge{
+    display:inline-block;
+    border:1px solid rgba(255,255,255,0.5);
+    padding:8px 18px;
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    margin-bottom:24px;
+}
+
+.hero h1{
+    font-family:"Cormorant Garamond",serif;
+    font-size:clamp(2.8rem,5.4vw,5rem);
+    line-height:1.03;
+    margin-bottom:20px;
+    text-shadow:0 6px 20px rgba(0,0,0,0.45);
+}
+
+.hero p{
+    max-width:720px;
+    margin:0 auto 32px;
+    color:rgba(255,255,255,0.9);
+    font-size:1.05rem;
+    text-shadow:0 3px 12px rgba(0,0,0,0.4);
+}
+
+.hero-buttons{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    flex-wrap:wrap;
+}
+
+.btn{
+    display:inline-block;
+    padding:13px 26px;
+    text-decoration:none;
+    font-weight:700;
+    font-size:0.85rem;
+    text-transform:uppercase;
+    letter-spacing:0.8px;
+    border-radius:2px;
+}
+
+.btn-red{
+    background:var(--red);
+    color:white;
+}
+
+.btn-red:hover{
+    background:var(--red-dark);
+}
+
+.btn-white{
+    border:1px solid white;
+    color:white;
+}
+
+.btn-white:hover{
+    background:white;
+    color:var(--dark);
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    background:white;
+    max-width:1100px;
+    margin:-20px auto 0;
+    position:relative;
+    z-index:5;
+    box-shadow:0 25px 70px rgba(0,0,0,0.12);
+}
+
+.stat{
+    min-height:185px;
+    padding:28px 25px;
+    text-align:center;
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+
+.stat:last-child{
+    border-right:none;
+}
+
+.stat h3{
+    font-size:3.5rem;
+    color:var(--red);
+    font-family:"Cormorant Garamond", serif;
+    line-height:1;
+    margin-bottom:18px;
+}
+
+.stat p{
+    color:var(--muted);
+    font-size:0.82rem;
+    font-weight:700;
+    text-transform:uppercase;
+}
+
+section{
+    padding:100px 8%;
+}
+
+.section-title{
+    text-align:center;
+    max-width:760px;
+    margin:0 auto 30px;
+}
+
+.section-title span{
+    color:var(--red);
+    font-size:1.7rem;
+    font-weight:800;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+}
+
+.section-title h2{
+    font-family:"Cormorant Garamond",serif;
+    color:var(--dark);
+    font-size:clamp(2.7rem,5vw,4.5rem);
+    line-height:1;
+    margin:12px 0;
+}
+
+.section-title p{
+    color:var(--muted);
+    max-width:750px;
+    margin:0 auto;
+    line-height:1.8;
+}
+
+.about-section{
+    padding:70px 8%;
+}
+
+.about-container{
+    max-width:1120px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:0.9fr 1.1fr;
+    gap:45px;
+    align-items:center;
+}
+
+.small-label{
+    color:var(--red);
+    font-size:1.7rem;
+    font-weight:800;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+}
+
+.about-left h2{
+    font-family:"Cormorant Garamond",serif;
+    color:var(--dark);
+    font-size:clamp(2.6rem,4.5vw,4rem);
+    line-height:0.95;
+    margin:10px 0 16px;
+}
+
+.about-intro{
+    color:var(--muted);
+    max-width:460px;
+    margin-bottom:24px;
+    line-height:1.7;
+}
+
+.about-image{
+    min-height:310px;
+    background:
+        linear-gradient(rgba(160,0,33,0.05),rgba(160,0,33,0.10)),
+        url("Kilometro - Members.jpg") center/cover;
+    position:relative;
+    box-shadow:0 16px 40px rgba(0,0,0,0.10);
+}
+
+.about-card{
+    position:absolute;
+    left:18px;
+    bottom:18px;
+    background:var(--red);
+    color:white;
+    padding:16px 20px;
+    max-width:210px;
+}
+
+.about-card h3{
+    font-family:"Cormorant Garamond", serif;
+    font-size:1.8rem;
+    line-height:1;
+    margin-bottom:6px;
+}
+
+.about-card p{
+    font-size:0.8rem;
+    line-height:1.45;
+}
+
+.about-right h3{
+    font-family:"Cormorant Garamond",serif;
+    color:var(--dark);
+    font-size:clamp(2.1rem,3.5vw,3.2rem);
+    line-height:1.05;
+    margin-bottom:18px;
+    max-width:560px;
+}
+
+.about-right p{
+    line-height:1.75;
+    margin-bottom:14px;
+    max-width:650px;
+}
+.about-left{
+    border-right:3px solid var(--red);
+    padding-right:40px;
+}
+.compact-features{
+    margin-top:22px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.compact-features .feature{
+    padding:18px;
+    min-height:125px;
+}
+
+.compact-features .feature p{
+    margin-bottom:0;
+    font-size:0.95rem;
+}
+
+@media(max-width:900px){
+    .about-container{
+        grid-template-columns:1fr;
+    }
+
+    .about-image{
+        min-height:300px;
+    }
+
+    .compact-features{
+        grid-template-columns:1fr;
+    }
+}
+
+.feature-list{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:28px;
+}
+
+.feature{
+    background:white;
+    border:1px solid var(--border);
+    padding:22px;
+    transition:all 0.35s ease;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+}
+.feature:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 40px rgba(0,0,0,0.10);
+    border-color:var(--red);
+}
+
+.feature::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:0;
+    height:4px;
+    background:var(--red);
+    transition:0.35s ease;
+}
+
+.feature:hover::before{
+    width:100%;
+}
+
+.feature strong{
+    transition:0.35s ease;
+}
+
+.feature:hover strong{
+    color:var(--red-dark);
+}
+.feature:hover{
+    background:linear-gradient(
+        135deg,
+        #ffffff,
+        #faf5f6
+    );
+}
+.feature strong{
+    color:var(--red);
+    display:block;
+    margin-bottom:6px;
+}
+
+.dark-section{
+    background:var(--dark);
+    color:white;
+}
+
+.dark-section .section-title h2{
+    color:white;
+}
+
+.dark-section .section-title p{
+    color:rgba(255,255,255,0.68);
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+}
+
+.card{
+    background:white;
+    padding:36px;
+    border:1px solid rgba(255,255,255,0.08);
+    transition:all 0.35s ease;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+}
+
+.card:hover{
+    transform:translateY(-10px);
+    box-shadow:0 25px 50px rgba(0,0,0,0.25);
+    border-color:var(--red);
+}
+.card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:0;
+    height:4px;
+    background:var(--red);
+    transition:0.35s ease;
+}
+
+.card:hover::before{
+    width:100%;
+}
+.card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 18px 45px rgba(0,0,0,0.10);
+}
+
+.card h3{
+    font-family:"Cormorant Garamond",serif;
+    font-size:1.8rem;
+    color:var(--red);
+    transition:0.35s ease;
+}
+.card:hover h3{
+    transform:translateX(6px);
+}
+.dark-card:hover{
+    background:#262626;
+}
+
+.dark-card p:hover{
+    color: var(--soft);
+}
+
+.dark-card:hover{
+    box-shadow:
+        0 20px 40px rgba(0,0,0,0.35),
+        0 0 20px rgba(160,0,33,0.15);
+}
+.card p{
+    color:var(--text);
+}
+
+.dark-card{
+    background:var(--soft);
+    border:1px solid #343434;
+}
+
+.dark-card p{
+    color:rgba(46, 45, 45, 0.7);
+}
+
+.programs{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:22px;
+}
+
+.program-icon{
+    font-size:2.1rem;
+    margin-bottom:15px;
+}
+.programs{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:26px;
+}
+
+.program-card{
+    background:white;
+    border:1px solid var(--border);
+    cursor:pointer;
+    overflow:hidden;
+    transition:all 0.35s ease;
+    position:relative;
+}
+
+.program-card:hover{
+    transform:translateY(-12px);
+    box-shadow:0 25px 55px rgba(0,0,0,0.18);
+    border-color:var(--red);
+}
+
+.program-card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:5px;
+    background:var(--red);
+    transform:scaleX(0);
+    transform-origin:left;
+    transition:transform 0.35s ease;
+    z-index:2;
+}
+
+.program-card:hover::before{
+    transform:scaleX(1);
+}
+
+.program-image{
+    height:230px;
+    background:linear-gradient(135deg,var(--red),var(--red-dark));
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    transition:all 0.4s ease;
+}
+
+.program-card:hover .program-image{
+    transform:scale(1.06);
+    filter:brightness(0.75);
+}
+
+.program-content{
+    padding:25px;
+    transition:all 0.35s ease;
+}
+
+.program-card:hover .program-content{
+    background:#fff8f9;
+}
+
+.program-content h3{
+    font-family:"Cormorant Garamond",serif;
+    color:var(--dark);
+    font-size:1.65rem;
+    line-height:1.1;
+    margin:10px 0;
+    transition:all 0.35s ease;
+}
+
+.program-card:hover .program-content h3{
+    color:var(--red);
+    transform:translateX(5px);
+}
+
+.program-content span{
+    color:var(--red);
+    font-size:0.75rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    transition:all 0.35s ease;
+}
+
+.program-card:hover .program-content span{
+    letter-spacing:2px;
+}
+.program-image{
+    height:230px;
+    background:linear-gradient(135deg,var(--red),var(--red-dark));
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.program-card:hover .program-image{
+    filter:brightness(0.85);
+}
+
+.program-content{
+    padding:25px;
+}
+
+.program-content span{
+    color:var(--red);
+    font-size:0.75rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+}
+
+.program-content h3{
+    font-family:"Cormorant Garamond",serif;
+    color:var(--dark);
+    font-size:1.65rem;
+    line-height:1.1;
+    margin:10px 0;
+}
+
+.program-content p{
+    color:var(--muted);
+    font-size:0.9rem;
+}
+
+.program-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.65);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:2000;
+    padding:20px;
+}
+
+.program-modal.show{
+    display:flex;
+}
+
+.modal-box{
+    background:white;
+    max-width:620px;
+    width:100%;
+    padding:42px;
+    position:relative;
+    border-top:7px solid var(--red);
+    animation:popIn 0.25s ease;
+}
+
+.modal-close{
+    position:absolute;
+    top:14px;
+    right:18px;
+    background:none;
+    border:none;
+    font-size:2rem;
+    cursor:pointer;
+    color:var(--red);
+}
+
+.modal-box span{
+    color:var(--red);
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    font-size:0.8rem;
+}
+
+.modal-box h2{
+    font-family:"Cormorant Garamond",serif;
+    color:var(--dark);
+    font-size:2.5rem;
+    line-height:1;
+    margin:12px 0 18px;
+}
+nav a{
+    position:relative;
+    text-decoration:none;
+}
+
+nav a::after{
+    content:"";
+    position:absolute;
+    left:0;
+    bottom:-8px;
+    width:0;
+    height:3px;
+    background:var(--red);
+    transition:0.3s ease;
+}
+
+nav a:hover::after{
+    width:100%;
+}
+
+nav a.active::after{
+    width:100%;
+}
+.modal-box p{
+    color:var(--text);
+    font-size:1rem;
+}
+
+@keyframes popIn{
+    from{
+        transform:scale(0.92);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+@media(max-width:1000px){
+    .programs{
+        grid-template-columns:1fr 1fr;
+    }
+}
+
+@media(max-width:600px){
+    .programs{
+        grid-template-columns:1fr;
+    }
+
+    .modal-box{
+        padding:32px 24px;
+    }
+}
+
+.founder-wrap{
+    display:grid;
+    grid-template-columns:0.85fr 1.15fr;
+    gap:35px;
+    align-items:stretch;
+    max-width:1150px;
+    margin:0 auto;
+}
+
+.founder-photo{
+    min-height:430px;
+    background:
+        linear-gradient(rgba(90,0,18,0.18),rgba(20,20,20,0.25)),
+        url("Kilometro - Ruette.jpg") center/cover;
+    border-radius:4px;
+    position:relative;
+    box-shadow:0 18px 45px rgba(0,0,0,0.12);
+}
+
+.founder-photo::after{
+    content:"Award-Winning Founder";
+    position:absolute;
+    left:22px;
+    bottom:22px;
+    background:var(--red);
+    color:white;
+    padding:10px 16px;
+    font-weight:700;
+    font-size:0.85rem;
+    letter-spacing:0.5px;
+}
+
+.founder-info{
+    background:var(--soft);
+    padding:34px;
+    border-left:6px solid var(--red);
+    box-shadow:0 15px 40px rgba(0,0,0,0.06);
+}
+
+.founder-info h3{
+    font-family:"Cormorant Garamond",serif;
+    font-size:2.4rem;
+    line-height:1;
+    color:var(--red);
+    margin-bottom:8px;
+}
+
+.founder-info span{
+    display:block;
+    margin-bottom:18px;
+    color:var(--muted);
+    font-weight:700;
+    font-size:0.9rem;
+}
+
+.founder-info p{
+    margin-bottom:12px;
+    line-height:1.65;
+}
+
+.awards-section{
+    margin-top:20px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+}
+
+.awards-title{
+    grid-column:1/-1;
+    color:var(--red);
+    font-size:1.15rem;
+    margin-bottom:0;
+}
+
+.award-box{
+    background:#ffffff;
+    border-left:4px solid var(--red);
+    padding:18px;
+    transition:0.3s ease;
+}
+
+.award-box:hover{
+    transform:translateY(-5px);
+    box-shadow:0 12px 28px rgba(0,0,0,0.08);
+}
+
+.award-box h5{
+    color:var(--dark);
+    font-size:1rem;
+    line-height:1.3;
+    margin-bottom:8px;
+}
+
+.award-box p{
+    color:var(--text);
+    font-size:0.9rem;
+    line-height:1.55;
+    margin-bottom:8px;
+}
+
+.award-box small{
+    color:var(--muted);
+    font-weight:600;
+    font-size:0.8rem;
+}
+
+@media(max-width:900px){
+    .founder-wrap{
+        grid-template-columns:1fr;
+    }
+
+    .founder-photo{
+        min-height:360px;
+    }
+
+    .awards-section{
+        grid-template-columns:1fr;
+    }
+}
+
+.award-icon {
+    width: 22px;
+    height: 22px;
+    vertical-align: middle;
+    margin-right: 6px;
+filter: brightness(0) saturate(100%) invert(12%) sepia(5%) saturate(200%) hue-rotate(0deg) brightness(95%) contrast(90%);
+}
+.cta{
+    background:
+        linear-gradient(rgba(160,0,33,0.88),rgba(114,0,23,0.92)),
+        url("https://images.unsplash.com/photo-1556761175-b413da4baf72?w=1600&auto=format&fit=crop") center/cover;
+    color:white;
+    text-align:center;
+}
+
+.cta h2{
+    font-family:"Cormorant Garamond",serif;
+    font-size:clamp(2.8rem,5vw,4.8rem);
+    line-height:1;
+    margin-bottom:18px;
+}
+
+.cta p{
+    max-width:720px;
+    margin:0 auto 30px;
+    color:rgba(255,255,255,0.82);
+}
+
+.contact{
+    background:white;
+}
+
+.contact-grid{
+    display:grid;
+    grid-template-columns:0.9fr 1.1fr;
+    gap:35px;
+}
+
+.contact-info,
+.contact-form{
+    padding:25px;
+    border:1px solid var(--border);
+    background:var(--soft);
+}
+
+.contact-info h3{
+    color:var(--red);
+    margin:20px 0 8px;
+}
+
+.contact-info h3:first-child{
+    margin-top:0;
+}
+.contact{
+    padding-top:60px;
+    padding-bottom:40px;
+}
+
+.contact-link{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-top:6px;
+    text-decoration:none;
+    color:var(--dark);
+    font-weight:700;
+    transition:0.3s ease;
+}
+
+.contact-link:hover{
+    color:var(--red);
+    transform:translateX(5px);
+}
+
+.contact-icon{
+    width:34px;
+    height:34px;
+    color:white;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    font-size:1.2rem;
+    font-weight:800;
+    font-family:Arial, sans-serif;
+    flex-shrink:0;
+}
+
+.email-icon{
+    background:var(--red);
+}
+
+.phone-icon{
+    background:#108a46;
+}
+
+.fb-icon{
+    background:#0866ff;
+    font-size:1.4rem;
+}
+
+.contact-form{
+    width:100%;
+    height:100%;
+    padding:30px;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+}
+
+.contact-form-title{
+    color:var(--red);
+    font-size:2rem;
+    font-weight:800;
+    margin-bottom:25px;
+    text-align: center;
+}
+
+.contact-form form{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    flex:1;
+}
+
+.contact-form input,
+.contact-form textarea{
+    width:100%;
+    padding:14px;
+    margin-bottom:15px;
+    border:1px solid var(--border);
+    background:#fff;
+    font-family:inherit;
+    font-size:1rem;
+    box-sizing:border-box; 
+    outline:none;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus{
+    border-color:var(--red);
+}
+
+.contact-form textarea{
+    min-height:200px; 
+    flex:1; 
+    resize:vertical;
+}
+
+.contact-form button{
+    width:100%;
+    padding:15px;
+    background:var(--red);
+    color:#fff;
+    border:none;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    cursor:pointer;
+    border-radius:5px;
+}
+
+footer{
+    background:#0f0f0f;
+    color:rgba(255,255,255,0.65);
+    padding:15px 8%;
+    text-align:center;
+}
+
+footer h3{
+    font-family:"Cormorant Garamond",serif;
+    color:white;
+    font-size:1.15rem;
+    margin-bottom:5px;
+    line-height:1.1;
+}
+
+footer p{
+    font-size:0.75rem;
+    margin:1px 0;
+    line-height:1.3;
+}
+
+.reveal.active{
+    opacity:1;
+    transform:translateY(0);
+}
+
+@media(max-width:1000px){
+    .nav-links{
+        position:fixed;
+        top:82px;
+        left:-100%;
+        width:100%;
+        height:calc(100vh - 82px);
+        background:white;
+        flex-direction:column;
+        padding-top:50px;
+        transition:0.3s;
+    }
+
+    .nav-links.show{
+        left:0;
+    }
+
+    .menu{
+        display:block;
+    }
+
+    .stats,
+    .about-grid,
+    .founder-wrap,
+    .contact-grid{
+        grid-template-columns:1fr;
+    
+    }
+
+    .cards,
+    .programs,
+    .donate-grid{
+        grid-template-columns:1fr 1fr;
+    }
+
+    .about-card{
+        right:20px;
+    }
+}
+
+@media(max-width:600px){
+    section{
+        padding:75px 6%;
+        .brand-logo{
+    height:45px;
+}
+    }
+
+    .cards,
+    .programs,
+    .feature-list,
+    .stats,
+    .donate-grid{
+        grid-template-columns:1fr;
+    }
+
+    .hero h1{
+        font-size:3.5rem;
+    }
+
+    .stat{
+        border-right:none;
+        border-bottom:1px solid var(--border);
+    }
+
+    .brand h3{
+        font-size:1.35rem;
+    }
+}
+.more-projects{
+    text-align:center;
+    margin-top:38px;
+    margin-bottom:0;
+}
+#programs{
+    padding-bottom:60px;
+}
+
+/* ---- Donation panel ---- */
+#donate{
+    text-align:center;
+    padding:100px 8%;
+}
+
+#donate .hero-badge{
+    border:1px solid rgba(255,255,255,0.5);
+}
+
+#donate h2{
+    font-family:"Cormorant Garamond",serif;
+    font-size:clamp(2.8rem,5vw,4.8rem);
+    line-height:1;
+    margin:18px 0;
+}
+
+#donate p{
+    max-width:720px;
+    margin:0 auto 30px;
+    color:rgba(255,255,255,0.85);
+}
+
+#donate-channels{
+    background:var(--white);
+}
+
+.donate-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+    max-width:1120px;
+    margin:0 auto;
+}
+
+.donate-card{
+    background:var(--soft);
+    border:1px solid var(--border);
+    padding:38px 28px;
+    text-align:center;
+    transition:all 0.35s ease;
+    cursor:default;
+    position:relative;
+    overflow:hidden;
+}
+
+.donate-card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:0;
+    height:4px;
+    background:var(--red);
+    transition:0.35s ease;
+}
+
+.donate-card:hover::before{
+    width:100%;
+}
+
+.donate-card:hover{
+    transform:translateY(-8px);
+    box-shadow:0 20px 40px rgba(0,0,0,0.10);
+    border-color:var(--red);
+    background:var(--white);
+}
+
+.donate-icon{
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    background:var(--red);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.6rem;
+    font-weight:800;
+    margin:0 auto 20px;
+    transition:0.35s ease;
+}
+
+.donate-card:hover .donate-icon{
+    background:var(--red-dark);
+    transform:scale(1.08);
+}
+
+.donate-card h3{
+    font-family:"Cormorant Garamond",serif;
+    color:var(--dark);
+    font-size:1.6rem;
+    margin-bottom:10px;
+}
+
+.donate-card p{
+    color:var(--muted);
+    font-size:0.92rem;
+}
+
+.donate-detail{
+    color:var(--red);
+    font-weight:700;
+    margin-top:12px;
+    font-size:1.05rem;
+}
+
+.donate-note{
+    text-align:center;
+    max-width:720px;
+    margin:36px auto 0;
+    color:var(--muted);
+    font-size:0.9rem;
+}
+
+</style>
+</head>
+
+<body>
+
+<nav>
+<a href="#home" class="brand">
+
+    <img src="Kilometro_-_Logo-removebg-preview.png" alt="Km.0 Logo" class="brand-logo">
+
+    <div class="brand-text">
+        <h3>Kilometro Zero</h3>
+        <span>Organization Incorporated</span>
+    </div>
+
+</a>
+
+    <div class="menu" onclick="toggleMenu()">☰</div>
+
+    <ul class="nav-links" id="navLinks">
+        <li><a href="#about">About</a></li>
+        <li><a href="#mission">Mission</a></li>
+        <li><a href="#programs">Programs</a></li>
+        <li><a href="#founder">Founder</a></li>
+        <li><a href="#legal">Legal</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="#donate" class="nav-btn">Donate</a></li>
+    </ul>
+</nav>
+
+<header class="hero" id="home">
+    <div class="hero-content reveal">
+        <div class="hero-badge">SEC Registered Non-Stock Organization</div>
+        <h1>Empowering Communities Through Service</h1>
+        <p>
+Building opportunities, empowering communities, and promoting inclusion for all.        </p>
+        <div class="hero-buttons">
+            <a href="#donate" class="btn btn-red">Donate Now</a>
+            <a href="#programs" class="btn btn-white">Explore Programs</a>
+        </div>
+    </div>
+</header>
+
+<div class="stats reveal">
+    <div class="stat">
+        <h3 class="counter" data-target="20000">0</h3>
+        <p>Members & Beneficiaries</p>
+    </div>
+    <div class="stat">
+        <h3>2022</h3>
+        <p>SEC Registered</p>
+    </div>
+    <div class="stat">
+        <h3>50</h3>
+        <p>Years Corporate Term</p>
+    </div>
+    <div class="stat">
+        <h3>PWD</h3>
+        <p>Inclusive Programs</p>
+    </div>
+</div>
+
+<section id="about" class="about-section">
+    <div class="about-container">
+
+        <div class="about-left reveal">
+            <span class="small-label">Who We Are</span>
+            <h2>About Kilometro Zero</h2>
+
+            <p class="about-intro">
+                Kilometro Zero Organization Incorporated is a non-stock organization
+                focused on livelihood, inclusion, and community development.
+            </p>
+
+            <div class="about-image">
+                <div class="about-card">
+                    <h3>20,000+</h3>
+                    <p>Members and beneficiaries supported through the organization’s growing network.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-right reveal">
+            <h3>Creating Opportunities for Communities</h3>
+
+            <p>
+                Kilometro Zero serves as a starting point for hope, support, and opportunity.
+                It helps members and beneficiaries gain access to livelihood programs,
+                skills development, and community assistance.
+            </p>
+
+            <p>
+                The organization also supports Persons With Disabilities and works with
+                government agencies, NGOs, and private partners to create sustainable impact.
+            </p>
+
+            <div class="feature-list compact-features">
+                <div class="feature">
+                    <strong>Livelihood</strong>
+                    <p>Income-generating programs and skills support.</p>
+                </div>
+
+                <div class="feature">
+                    <strong>PWD Inclusion</strong>
+                    <p>Programs for dignity, access, and opportunity.</p>
+                </div>
+
+                <div class="feature">
+                    <strong>Outreach</strong>
+                    <p>Activities that address community needs.</p>
+                </div>
+
+                <div class="feature">
+                    <strong>Partnerships</strong>
+                    <p>Collaboration with agencies and organizations.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<section class="dark-section" id="mission">
+    <div class="section-title reveal">
+        <span>Our Foundation</span>
+        <h2>Mission, Vision, and Goals</h2>
+        <p>
+            The organization’s work is guided by service, inclusion, and sustainable community development.
+        </p>
+    </div>
+
+    <div class="cards">
+        <div class="card dark-card reveal">
+            <h3>Mission</h3>
+            <p>
+                To engage in activities that improve the lives of members and beneficiaries through
+                livelihood programs, community development, and inclusive opportunities for Persons
+                With Disabilities.
+            </p>
+        </div>
+
+        <div class="card dark-card reveal">
+            <h3>Vision</h3>
+            <p>
+                A community where every person has access to support, livelihood, dignity,
+                and opportunities regardless of circumstance.
+            </p>
+        </div>
+
+        <div class="card dark-card reveal">
+            <h3>Goals</h3>
+            <p>
+                To strengthen partnerships, support PWD communities, provide meaningful livelihood
+                programs, and serve as a bridge between communities and institutions.
+            </p>
+        </div>
+    </div>
+</section>
+
+
+<section id="programs">
+    <div class="section-title reveal">
+        <span>What We Do</span>
+        <h2>Programs and Activities</h2>
+        <p>
+            Kilometro Zero conducts livelihood, training, scholarship, and business development
+            activities that help members and beneficiaries gain skills and opportunities.
+        </p>
+    </div>
+
+    <div class="programs">
+        <div class="program-card reveal" onclick="openProgramModal(
+            'Isang Araw Tungo sa Kaunlaran ng Kabuhayan',
+            'December 15, 2022',
+            'A livelihood-focused activity designed to support beneficiaries by introducing opportunities for economic growth, self-reliance, and community-based development.'
+        )">
+           <div class="program-image" style="background:url('Kilometro - Isang Daan2.jpg') center/cover;"></div>
+            <div class="program-content">
+                <span>Livelihood Program</span>
+                <h3>Isang Araw Tungo sa Kaunlaran ng Kabuhayan</h3>
+                <p>December 15, 2022</p>
+            </div>
+        </div>
+
+
+        <div class="program-card reveal" onclick="openProgramModal(
+            'TESDA Scholarship Program',
+            'February 7, 2023',
+            'A scholarship opportunity that helped members and beneficiaries access TESDA-supported training, allowing them to develop technical skills for employment and livelihood.'
+        )">
+            <div class="program-image" style="background:url('Kilometro - TESDA Training.jpg') center/cover;"></div>
+            <div class="program-content">
+                <span>Scholarship Program</span>
+                <h3>TESDA Scholarship Program</h3>
+                <p>February 7, 2023</p>
+            </div>
+        </div>
+
+        <div class="program-card reveal" onclick="openProgramModal(
+            'DOLE Training on Customer Handling and Service Quality',
+            'August 9, 2023',
+            'A DOLE-supported training focused on customer handling and service quality, helping participants improve professionalism, communication, and service delivery.'
+        )">
+            <div class="program-image" style="background:url('Kilometro - Service.jpg') center/cover;"></div>
+            <div class="program-content">
+                <span>DOLE Training</span>
+                <h3>Customer Handling and Service Quality</h3>
+                <p>August 9, 2023</p>
+            </div>
+        </div>
+
+        <div class="program-card reveal" onclick="openProgramModal(
+            'Marketing 101 Seminar',
+            'September 25, 2023',
+            'A business learning seminar held at the DTI Negosyo Center, focused on basic marketing strategies for members and beneficiaries who want to start or improve small businesses.'
+        )">
+            <div class="program-image" style="background:url('Kilometro - Marketing.jpg') center/cover;"></div>
+            <div class="program-content">
+                <span>DTI Seminar</span>
+                <h3>Marketing 101 Seminar</h3>
+                <p>DTI Negosyo Center · September 25, 2023</p>
+            </div>
+        </div>
+
+        <div class="program-card reveal" onclick="openProgramModal(
+            'DTI Business Management for Micro Enterprises',
+            'October 4, 2023',
+            'A DTI-supported business management session for micro enterprises, helping participants understand basic operations, planning, and management for small businesses.'
+ )">
+                <div class="program-image" style="background:url('Kilometro - Bussiness.jpg') center/cover;"></div>
+            <div class="program-content">
+                <span>Business Development</span>
+                <h3>Business Management for Micro Enterprises</h3>
+                <p>October 4, 2023</p>
+            </div>
+        </div>
+                <div class="program-card reveal" onclick="openProgramModal(
+            'Training – NCII Cookery Certification',
+            'February 12, 2024',
+            'A skills training program where 25 members received certification in Cookery NCII, helping them gain practical food preparation skills and livelihood opportunities.'
+        )">
+            <div class="program-image" style="background:url('Kilometro - NCII.jpg') center/cover;"></div>
+            <div class="program-content">
+                <span>Skills Training</span>
+                <h3>Training – NCII Cookery Certification</h3>
+                <p>25 members certified · February 12, 2024</p>
+            </div>
+        </div>
+
+    </div>
+    <div class="more-projects">
+    <a href="KILOMETRO PROJECTS.pdf" target="_blank" class="btn btn-red">
+        View Full Project Portfolio
+    </a>
+</div>
+</section>
+<section id="founder">
+    <div class="section-title reveal">
+        <span>Leadership</span>
+        <h2>Meet the Founder</h2>
+        <p>
+<p>
+Founded on service, inclusion, and community empowerment.
+</p>        </p>
+    </div>
+
+    <div class="founder-wrap">
+    <div class="founder-photo reveal"></div>
+
+    <div class="founder-info reveal">
+        <h3>Ms. Ruette Remegio</h3>
+        <span>Founder, Kilometro Zero Organization Incorporated</span>
+
+        <p>
+            Ms. Ruette Remegio is the founder of Kilometro Zero Organization Incorporated,
+            leading initiatives focused on livelihood development, community empowerment,
+            and inclusive opportunities for Persons With Disabilities.
+        </p>
+
+        <p>
+            Under her leadership, the organization has grown to serve more than
+            <strong>20,000 members and beneficiaries</strong> and has become recognized
+            for its impact on livelihood and community development.
+        </p>
+
+        <div class="awards-section">
+        <h4 class="awards-title">
+            <img src="trophy icon.png" alt="Trophy Icon" class="award-icon">
+            Recognitions & Awards
+        </h4>
+        </div>
+
+            <div class="award-box">
+                <h5>Regional Winner – DOLE Assisted Livelihood Project</h5>
+                <p>
+                    Recognized during the 2024 Regional Kabuhayan Awards for her
+                    contribution to livelihood development and community empowerment.
+                </p>
+                <small>2024 Regional Kabuhayan Awards</small>
+            </div>
+
+            <div class="award-box">
+                <h5>TESDA Women of the Month</h5>
+                <p>
+                    Recognized for her dedication, leadership, and commitment to
+                    empowering communities through livelihood initiatives.
+                </p>
+                <small>March 2024</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+</section>
+<section id="legal">
+    <div class="section-title reveal">
+        <span>Legal Recognition</span>
+        <h2>SEC Registered Organization</h2>
+        <p>
+            Kilometro Zero Organization Incorporated is registered as a non-stock corporation
+            under the laws of the Republic of the Philippines.
+        </p>
+    </div>
+
+    
+
+    <div class="cards">
+        <div class="card reveal">
+            <h3>Official Name</h3>
+            <p>Kilometro Zero Organization Incorporated</p>
+        </div>
+
+        <div class="card reveal">
+            <h3>Organization Type</h3>
+            <p>SEC-registered non-stock organization focused on community service and livelihood support.</p>
+        </div>
+
+        <div class="card reveal">
+            <h3>Principal Office</h3>
+            <p>1799 Dagonoy Street, Sta. Ana, Barangay 772, City of Manila, NCR, 1009.</p>
+        </div>
+    </div>
+</section>
+
+<section class="cta" id="donate">
+    <span class="hero-badge">Support the Cause</span>
+    <h2>Make a Donation</h2>
+    <p>
+        Your generosity fuels livelihood programs, skills training, and inclusive
+        opportunities for Persons With Disabilities and underserved communities.
+        Every contribution, big or small, moves us closer to a self-reliant
+        Kilometro Zero community.
+    </p>
+    <div class="hero-buttons">
+        <a href="#donate-channels" class="btn btn-white">View Donation Channels</a>
+        <a href="mailto:kilometrozero2022@gmail.com?subject=Donation%20Inquiry" class="btn btn-white">Email Us to Donate</a>
+    </div>
+</section>
+
+<section id="donate-channels">
+    <div class="section-title reveal">
+        <span>Ways to Give</span>
+        <h2>Donation Channels</h2>
+        <p>
+            Choose the most convenient way to support our programs. For receipts,
+            proof of donation, or partnership arrangements, please reach out through
+            our contact details below.
+        </p>
+    </div>
+
+    <div class="donate-grid">
+        <div class="donate-card reveal">
+            <div class="donate-icon">₱</div>
+            <h3>GCash</h3>
+            <p>Send your donation directly through GCash mobile wallet.</p>
+            <p class="donate-detail">0945 625 9185</p>
+        </div>
+
+        <div class="donate-card reveal">
+            <div class="donate-icon">🏦</div>
+            <h3>Bank Transfer</h3>
+            <p>Message or email us and we'll share our bank account details.</p>
+            <p class="donate-detail">kilometrozero2022@gmail.com</p>
+        </div>
+
+        <div class="donate-card reveal">
+            <div class="donate-icon">🤝</div>
+            <h3>In-Kind & Partnerships</h3>
+            <p>Donate goods, sponsor a program, or partner with us directly.</p>
+            <p class="donate-detail">Visit our office or send a message</p>
+        </div>
+    </div>
+
+    <p class="donate-note">
+        Kilometro Zero Organization Incorporated is an SEC-registered non-stock
+        organization. All donations directly support our livelihood, skills
+        training, and community empowerment programs.
+    </p>
+</section>
+
+<section class="contact" id="contact">
+    <div class="section-title reveal">
+        <span>Contact Us</span>
+        <h2>Get in Touch</h2>
+        <p>
+            Send inquiries, partnership proposals, volunteer messages, or community-related concerns.
+        </p>
+    </div>
+
+    <div class="contact-grid">
+        <div class="contact-info reveal">
+    <h3>Email</h3>
+    <a href="mailto:kilometrozero2022@gmail.com" class="contact-link email-link">
+        <img src="mail.png" alt="Email Icon" class="contact-icon email-icon" />
+        kilometrozero2022@gmail.com
+    </a>
+
+    <h3>Contact Number</h3>
+    <a href="tel:09456259185" class="contact-link phone-link">
+        <img src="contact.png" alt="Phone Icon" class="contact-icon phone-icon" />
+        09456259185
+    </a>
+
+    <h3>Facebook</h3>
+    <a href="https://www.facebook.com/profile.php?id=100085084532334" 
+    target="_blank" 
+    class="contact-link facebook-link">
+        <img src= "fb.png" alt="Facebook Icon" class="contact-icon fb-icon" />
+        Visit our Facebook Page
+    </a>
+
+    <h3>Office Address</h3>
+    <p>
+        1799 Dagonoy Street<br>
+        Sta. Ana, Barangay 772<br>
+        City of Manila, NCR 1009
+    </p>
+
+    <h3>Members and Beneficiaries</h3>
+    <p>20,000+ individuals supported through the organization’s network and programs.</p>
+</div>
+
+    <div class="contact-form reveal">
+    <h2 class="contact-form-title">Contact Form</h2>
+
+    <form onsubmit="sendEmail(event)">
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="subject" placeholder="Subject" required>
+        <textarea id="message" placeholder="Message" required></textarea>
+        <button type="submit">Send Email</button>
+    </form>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <h3>Kilometro Zero Organization Incorporated</h3>
+    <p>© 2026 Kilometro Zero Organization Incorporated. All rights reserved.</p>
+</footer>
+
+<script>
+function toggleMenu(){
+    document.getElementById("navLinks").classList.toggle("show");
+}
+
+document.querySelectorAll(".nav-links a").forEach(link=>{
+    link.addEventListener("click",()=>{
+        document.getElementById("navLinks").classList.remove("show");
+    });
+});
+
+const reveals=document.querySelectorAll(".reveal");
+
+function revealOnScroll(){
+    reveals.forEach(item=>{
+        const top=item.getBoundingClientRect().top;
+        if(top<window.innerHeight-100){
+            item.classList.add("active");
+        }
+    });
+}
+
+window.addEventListener("scroll",revealOnScroll);
+window.addEventListener("load",revealOnScroll);
+
+let counterStarted=false;
+const counters=document.querySelectorAll(".counter");
+
+function startCounter(){
+    if(counterStarted)return;
+
+    const statBox=document.querySelector(".stats");
+    const top=statBox.getBoundingClientRect().top;
+
+    if(top<window.innerHeight-100){
+        counters.forEach(counter=>{
+            const target=+counter.dataset.target;
+            let count=0;
+
+            function update(){
+                count+=Math.ceil(target/90);
+                if(count<target){
+                    counter.textContent=count.toLocaleString()+"+";
+                    requestAnimationFrame(update);
+                }else{
+                    counter.textContent=target.toLocaleString()+"+";
+                }
+            }
+
+            update();
+        });
+
+        counterStarted=true;
+    }
+}
+const sections = document.querySelectorAll("section");
+const navLinks = document.querySelectorAll("nav a");
+
+window.addEventListener("scroll", () => {
+
+    let current = "";
+
+    sections.forEach(section => {
+
+        const sectionTop = section.offsetTop - 150;
+
+        if(window.scrollY >= sectionTop){
+            current = section.getAttribute("id");
+        }
+    });
+
+    navLinks.forEach(link => {
+
+        link.classList.remove("active");
+
+        if(link.getAttribute("href") === "#" + current){
+            link.classList.add("active");
+        }
+    });
+});
+window.addEventListener("scroll",startCounter);
+window.addEventListener("load",startCounter);
+
+function sendEmail(event){
+    event.preventDefault();
+
+    const name=document.getElementById("name").value;
+    const email=document.getElementById("email").value;
+    const subject=document.getElementById("subject").value;
+    const message=document.getElementById("message").value;
+
+    const body=
+        "Name: "+name+"\n"+
+        "Email: "+email+"\n\n"+
+        "Message:\n"+message;
+
+    window.location.href=
+        "mailto:kilometrozero2022@gmail.com"+
+        "?subject="+encodeURIComponent(subject)+
+        "&body="+encodeURIComponent(body);
+}
+function openProgramModal(title, date, description){
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalDate").textContent = date;
+    document.getElementById("modalDescription").textContent = description;
+    document.getElementById("programModal").classList.add("show");
+}
+
+function closeProgramModal(){
+    document.getElementById("programModal").classList.remove("show");
+}
+
+document.getElementById("programModal").addEventListener("click", function(e){
+    if(e.target === this){
+        closeProgramModal();
+    }
+});
+</script>
+<div class="program-modal" id="programModal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeProgramModal()">×</button>
+        <span id="modalDate"></span>
+        <h2 id="modalTitle"></h2>
+        <p id="modalDescription"></p>
+    </div>
+</div>
+</body>
+</html>

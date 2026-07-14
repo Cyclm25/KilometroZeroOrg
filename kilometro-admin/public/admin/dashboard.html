@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Kilometro Zero</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/admin/assets/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="mark">KZ</div>
+            <div>
+                <h2>Kilometro Zero</h2>
+                <span>Admin Panel</span>
+            </div>
+        </div>
+
+        <nav class="nav-group">
+            <div class="nav-group-label">Overview</div>
+            <div class="nav-item active" data-section="overview"><span class="icon">📊</span> Dashboard</div>
+
+            <div class="nav-group-label">Management</div>
+            <div class="nav-item" data-section="campaigns"><span class="icon">📢</span> Campaigns</div>
+            <div class="nav-item" data-section="donations"><span class="icon">💳</span> Donations</div>
+            <div class="nav-item" data-section="users"><span class="icon">👥</span> Users</div>
+            <div class="nav-item" data-section="payments"><span class="icon">🏦</span> Payment Gateway</div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-chip">
+                <div class="avatar" id="adminAvatar">A</div>
+                <div class="who">
+                    <div class="name" id="adminName">Administrator</div>
+                    <div class="role">Site Owner</div>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn">Log Out</button>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <button class="icon-btn menu-toggle" id="menuToggle">☰</button>
+                <h1 id="pageTitle">Dashboard Overview</h1>
+            </div>
+            <div class="topbar-actions">
+                <button class="icon-btn" id="themeToggle" title="Toggle light/dark mode">🌙</button>
+                <div style="position:relative;">
+                    <button class="icon-btn" id="notifBtn" title="Notifications">
+                        🔔
+                        <span class="badge-dot" id="notifDot" style="display:none;"></span>
+                    </button>
+                    <div class="notif-panel" id="notifPanel">
+                        <div class="notif-panel-head">
+                            <span>Notifications</span>
+                            <button class="btn-sm" id="markAllRead">Mark all read</button>
+                        </div>
+                        <ul class="notif-list" id="notifList"></ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content">
+
+            <!-- OVERVIEW -->
+            <section class="section active" id="section-overview">
+                <div class="cards-grid" id="overviewCards"></div>
+
+                <div class="two-col">
+                    <div class="panel">
+                        <div class="panel-head"><h3>Donations Trend (Last 6 Months)</h3></div>
+                        <canvas id="trendChart" height="110"></canvas>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-head"><h3>Recent Activity</h3></div>
+                        <ul class="activity-list" id="activityList"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CAMPAIGNS -->
+            <section class="section" id="section-campaigns">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Donation Campaigns</h3>
+                        <div class="filters">
+                            <input type="text" id="campaignSearch" placeholder="Search campaigns...">
+                            <select id="campaignStatusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="active">Active</option>
+                                <option value="completed">Completed</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr>
+                                <th>Title</th><th>Category</th><th>Goal</th><th>Raised</th><th>Status</th><th>Created</th><th>Actions</th>
+                            </tr></thead>
+                            <tbody id="campaignsTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="campaignsPagination"></div>
+                </div>
+            </section>
+
+            <!-- DONATIONS -->
+            <section class="section" id="section-donations">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>All Donations</h3>
+                        <div class="filters">
+                            <select id="donationStatusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="successful">Successful</option>
+                                <option value="pending">Pending</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                            <input type="date" id="donationDateFrom">
+                            <input type="date" id="donationDateTo">
+                            <button class="btn-sm btn-primary" id="exportCsvBtn">Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr>
+                                <th>Donor</th><th>Campaign</th><th>Amount</th><th>Status</th><th>Method</th><th>Date</th>
+                            </tr></thead>
+                            <tbody id="donationsTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="donationsPagination"></div>
+                </div>
+            </section>
+
+            <!-- USERS -->
+            <section class="section" id="section-users">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Registered Users</h3>
+                        <div class="filters">
+                            <input type="text" id="userSearch" placeholder="Search name or email...">
+                            <select id="userStatusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr>
+                                <th>Name</th><th>Email</th><th>Donor?</th><th>Status</th><th>Joined</th><th>Actions</th>
+                            </tr></thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="usersPagination"></div>
+                </div>
+            </section>
+
+            <!-- PAYMENT GATEWAY (future) -->
+            <section class="section" id="section-payments">
+                <div class="panel" style="border-left:4px solid var(--gold);">
+                    <strong>⚠ Payment gateway integration is still under development.</strong>
+                    <p style="color:var(--muted); margin:8px 0 0; font-size:0.85rem;">
+                        The figures below are placeholder / mock transaction data so the dashboard layout is ready
+                        to go live the moment the real gateway is connected.
+                    </p>
+                </div>
+                <div class="cards-grid" id="paymentCards"></div>
+                <div class="panel">
+                    <div class="panel-head"><h3>Mock Transaction History</h3></div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Donor</th><th>Amount</th><th>Status</th><th>Method</th><th>Date</th></tr></thead>
+                            <tbody id="paymentsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<!-- Campaign detail / edit modal -->
+<div class="modal-overlay" id="campaignModal">
+    <div class="modal-box">
+        <h3 id="campaignModalTitle">Campaign Details</h3>
+        <div class="field"><label>Title</label><input type="text" id="editTitle"></div>
+        <div class="field"><label>Category</label><input type="text" id="editCategory"></div>
+        <div class="field"><label>Goal Amount (₱)</label><input type="number" id="editGoal"></div>
+        <div class="field"><label>Description</label><textarea id="editDescription" rows="4"></textarea></div>
+        <div class="modal-actions">
+            <button class="btn-sm" id="closeCampaignModal">Cancel</button>
+            <button class="btn-sm btn-primary" id="saveCampaignBtn">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+<!-- User detail modal -->
+<div class="modal-overlay" id="userModal">
+    <div class="modal-box" id="userModalContent"></div>
+</div>
+
+<div class="idle-toast" id="idleToast">You'll be logged out soon due to inactivity.</div>
+
+<script src="/admin/js/api.js"></script>
+<script src="/admin/js/dashboard.js"></script>
+</body>
+</html>

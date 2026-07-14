@@ -1,0 +1,6 @@
+node_modules/
+.env
+server/db/kilometro.db
+server/db/kilometro.db-shm
+server/db/kilometro.db-wal
+*.log
