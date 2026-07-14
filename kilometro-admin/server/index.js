@@ -4,6 +4,7 @@ const path = require("path");
 const express = require("express");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
+const seedAdmin = require("./db/seedAdmin");
 
 const { verifyAdminToken, requireAdminRole, guardAdminPage } = require("./middleware/auth");
 const authRoutes = require("./routes/auth.routes");
@@ -90,8 +91,19 @@ app.get("/admin/access-denied", (req, res) => {
     res.status(403).sendFile(path.join(adminPublicDir, "access-denied.html"));
 });
 
-app.listen(PORT, () => {
-    console.log(`Kilometro Zero server running on http://localhost:${PORT}`);
-    console.log(`Public site:      http://localhost:${PORT}/`);
-    console.log(`Admin login:      http://localhost:${PORT}/admin/login`);
-});
+// ---------------------------------------------------------------------
+// STARTUP - seed/verify the admin account from env vars first, then
+// start accepting requests. This makes the admin login work automatically
+// on Render's free tier, where Shell/one-off jobs aren't available.
+// ---------------------------------------------------------------------
+seedAdmin()
+    .catch((err) => {
+        console.error("[seedAdmin] error during startup seed:", err);
+    })
+    .finally(() => {
+        app.listen(PORT, () => {
+            console.log(`Kilometro Zero server running on http://localhost:${PORT}`);
+            console.log(`Public site:      http://localhost:${PORT}/`);
+            console.log(`Admin login:      http://localhost:${PORT}/admin/login`);
+        });
+    });
