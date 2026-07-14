@@ -8,6 +8,7 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const db = require("./database");
+const { encryptText } = require("../utils/security");
 
 async function seed() {
     db.prepare("DELETE FROM donations").run();
@@ -19,21 +20,71 @@ async function seed() {
 
     const passwordHash = await bcrypt.hash("DemoPassword123!", 10);
     const insertUser = db.prepare(`
-        INSERT INTO users (name, email, password_hash, role, status, is_donor, created_at)
-        VALUES (?, ?, ?, 'user', ?, ?, datetime('now', ?))
+        INSERT INTO users (
+            name, email, password_hash, role, status, is_donor,
+            email_verified, email_verified_at, kyc_status, kyc_submitted_at, kyc_reviewed_at, created_at
+        )
+        VALUES (?, ?, ?, 'user', ?, ?, ?, ?, ?, ?, ?, datetime('now', ?))
     `);
 
     const demoUsers = [
-        ["Maria Santos", "maria.santos@example.com", "active", 1, "-40 days"],
-        ["Juan Dela Cruz", "juan.delacruz@example.com", "active", 1, "-35 days"],
-        ["Angela Reyes", "angela.reyes@example.com", "active", 0, "-30 days"],
-        ["Mark Villanueva", "mark.villanueva@example.com", "suspended", 1, "-28 days"],
-        ["Krystel Ramos", "krystel.ramos@example.com", "active", 1, "-20 days"],
-        ["Paolo Fernandez", "paolo.fernandez@example.com", "active", 0, "-15 days"],
-        ["Nicole Aquino", "nicole.aquino@example.com", "active", 1, "-10 days"],
-        ["Ramon Torres", "ramon.torres@example.com", "active", 1, "-5 days"],
+        ["Maria Santos", "maria.santos@example.com", "active", 1, 1, "-40 days", "approved"],
+        ["Juan Dela Cruz", "juan.delacruz@example.com", "active", 1, 1, "-35 days", "approved"],
+        ["Angela Reyes", "angela.reyes@example.com", "active", 0, 1, "-30 days", "not_started"],
+        ["Mark Villanueva", "mark.villanueva@example.com", "suspended", 1, 1, "-28 days", "rejected"],
+        ["Krystel Ramos", "krystel.ramos@example.com", "active", 1, 1, "-20 days", "pending"],
+        ["Paolo Fernandez", "paolo.fernandez@example.com", "active", 0, 0, "-15 days", "not_started"],
+        ["Nicole Aquino", "nicole.aquino@example.com", "active", 1, 1, "-10 days", "approved"],
+        ["Ramon Torres", "ramon.torres@example.com", "active", 1, 1, "-5 days", "approved"],
     ];
-    for (const u of demoUsers) insertUser.run(u[0], u[1], passwordHash, u[2], u[3], u[4]);
+    for (const u of demoUsers) {
+        const createdAtOffset = u[5];
+        const isVerified = u[4];
+        const kycStatus = u[6];
+        const verifiedAt = isVerified ? createdAtOffset : null;
+        const submittedAt = kycStatus === "not_started" ? null : createdAtOffset;
+        const reviewedAt = ["approved", "rejected"].includes(kycStatus) ? createdAtOffset : null;
+        insertUser.run(u[0], u[1], passwordHash, u[2], u[3], isVerified, verifiedAt, kycStatus, submittedAt, reviewedAt, u[5]);
+    }
+
+    const demoImage = (label) => `data:image/svg+xml;base64,${Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#f5efe8"/><rect x="70" y="70" width="1060" height="660" rx="34" fill="#ffffff" stroke="#d8cec5"/><text x="120" y="180" font-family="Arial" font-size="48" fill="#a00021">${label}</text><text x="120" y="250" font-family="Arial" font-size="26" fill="#555">Demo KYC document preview</text></svg>`).toString("base64")}`;
+    const kycRows = [
+        ["maria.santos@example.com", "passport", "A1234567", "Passport", "approved"],
+        ["krystel.ramos@example.com", "national_id", "NID-2048", "National ID", "pending"],
+        ["mark.villanueva@example.com", "driver_license", "D-778899", "Driver License", "rejected"],
+    ];
+    const userLookup = db.prepare("SELECT id, email FROM users WHERE email = ?");
+    const insertKyc = db.prepare(`
+        INSERT INTO kyc_submissions (
+            user_id, id_type, id_document_name, id_document_mime, id_document_ciphertext,
+            selfie_name, selfie_mime, selfie_ciphertext, status, rejection_reason, submitted_at, reviewed_at, reviewed_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', ?), datetime('now', ?), NULL)
+    `);
+    for (const [email, idType, idNumber, documentLabel, status] of kycRows) {
+        const user = userLookup.get(email);
+        if (!user) continue;
+        const dataUrl = demoImage(documentLabel);
+        const payload = JSON.stringify({
+            idType,
+            idNumber,
+            document: { name: `${documentLabel}.svg`, mime: "image/svg+xml", dataUrl },
+            selfie: { name: `${documentLabel}-selfie.svg`, mime: "image/svg+xml", dataUrl },
+        });
+        insertKyc.run(
+            user.id,
+            idType,
+            `${documentLabel}.svg`,
+            "image/svg+xml",
+            encryptText(payload),
+            `${documentLabel}-selfie.svg`,
+            "image/svg+xml",
+            encryptText(payload),
+            status,
+            status === "rejected" ? "Photo quality or ID details could not be verified." : null,
+            status === "pending" ? "-3 days" : "-7 days",
+            status === "pending" ? null : "-2 days"
+        );
+    }
 
     const insertCampaign = db.prepare(`
         INSERT INTO campaigns (title, description, category, goal_amount, raised_amount, status, created_by, reported_count, created_at)

@@ -68,6 +68,7 @@ function loadSection(section) {
     if (section === "overview") loadOverview();
     if (section === "campaigns") loadCampaigns();
     if (section === "donations") loadDonations();
+    if (section === "kyc") loadKyc();
     if (section === "users") loadUsers();
     if (section === "payments") loadPayments();
 }
@@ -137,6 +138,8 @@ async function loadOverview() {
         { label: "Pending Review", value: data.campaigns.pending, icon: "⏳", color: "var(--warning)" },
         { label: "Registered Users", value: data.users.totalUsers, icon: "👥", color: "var(--info)" },
         { label: "Total Donors", value: data.users.totalDonors, icon: "❤️", color: "var(--red)" },
+        { label: "Verified Donors", value: data.users.verifiedDonors, icon: "🔐", color: "var(--success)" },
+        { label: "KYC Pending", value: data.users.pendingKyc, icon: "🛡️", color: "var(--warning)" },
         { label: "Total Donated", value: peso(data.payments.totalDonated), icon: "💰", color: "var(--success)" },
         { label: "Withdrawn Funds", value: peso(data.payments.withdrawnFunds), icon: "🏦", color: "var(--muted)" },
     ];
@@ -298,6 +301,82 @@ document.getElementById("exportCsvBtn").addEventListener("click", () => {
     window.location.href = `/api/admin/donations/export.csv?status=${status}&dateFrom=${dateFrom}&dateTo=${dateTo}`;
 });
 
+// ---------------- KYC ----------------
+let kycPage = 1;
+async function loadKyc() {
+    const search = document.getElementById("kycSearch").value;
+    const status = document.getElementById("kycStatusFilter").value;
+    const data = await api.get(`/api/admin/kyc?search=${encodeURIComponent(search)}&status=${status}&page=${kycPage}&pageSize=10`);
+    if (!data) return;
+
+    const tbody = document.getElementById("kycTableBody");
+    tbody.innerHTML = data.data.length ? data.data.map(k => `
+        <tr>
+            <td><strong>${escapeHtml(k.name)}</strong><br><span style="color:var(--muted); font-size:0.75rem;">${escapeHtml(k.email)}</span></td>
+            <td>${k.email_verified ? `<span class="status-pill status-approved">Verified</span>` : `<span class="status-pill status-pending">Unverified</span>`}</td>
+            <td><span class="status-pill status-${k.status === "not_started" ? "not_started" : k.status}">${k.status}</span></td>
+            <td>${fmtDateTime(k.submitted_at)}</td>
+            <td>${k.reviewed_at ? fmtDateTime(k.reviewed_at) : "—"}</td>
+            <td class="actions-cell">
+                <button class="btn-sm" data-kyc-view="${k.id}">View</button>
+                ${k.status === "pending" ? `<button class="btn-sm btn-success" data-kyc-approve="${k.id}">Approve</button><button class="btn-sm btn-danger" data-kyc-reject="${k.id}">Reject</button>` : ""}
+            </td>
+        </tr>
+    `).join("") : `<tr><td colspan="6" class="empty-state">No KYC submissions found.</td></tr>`;
+
+    renderPagination("kycPagination", data, kycPage, (p) => { kycPage = p; loadKyc(); });
+
+    tbody.querySelectorAll("[data-kyc-view]").forEach((b) => b.addEventListener("click", () => viewKyc(b.dataset.kycView)));
+    tbody.querySelectorAll("[data-kyc-approve]").forEach((b) => b.addEventListener("click", () => approveKyc(b.dataset.kycApprove)));
+    tbody.querySelectorAll("[data-kyc-reject]").forEach((b) => b.addEventListener("click", () => rejectKyc(b.dataset.kycReject)));
+}
+document.getElementById("kycSearch").addEventListener("input", debounce(() => { kycPage = 1; loadKyc(); }, 350));
+document.getElementById("kycStatusFilter").addEventListener("change", () => { kycPage = 1; loadKyc(); });
+
+async function viewKyc(id) {
+    const data = await api.get(`/api/admin/kyc/${id}`);
+    if (!data) return;
+    const submission = data.submission;
+    document.getElementById("userModalContent").innerHTML = `
+        <h3>${escapeHtml(submission.name)}</h3>
+        <p style="color:var(--muted); font-size:0.85rem;">${escapeHtml(submission.email)}</p>
+        <p><span class="status-pill status-${submission.status}">${submission.status}</span> · ${fmtDateTime(submission.submitted_at)}</p>
+        <p><strong>ID Type:</strong> ${escapeHtml(submission.id_type)}</p>
+        <p><strong>ID Number:</strong> ${escapeHtml(submission.id_number_masked || "—")}</p>
+        ${submission.rejection_reason ? `<p><strong>Rejection Reason:</strong> ${escapeHtml(submission.rejection_reason)}</p>` : ""}
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px;">
+            ${submission.document?.dataUrl ? `<div><strong>Government ID</strong><img src="${submission.document.dataUrl}" alt="Government ID" style="width:100%; margin-top:8px; border-radius:8px; border:1px solid var(--panel-border);" /></div>` : ""}
+            ${submission.selfie?.dataUrl ? `<div><strong>Selfie</strong><img src="${submission.selfie.dataUrl}" alt="Selfie" style="width:100%; margin-top:8px; border-radius:8px; border:1px solid var(--panel-border);" /></div>` : ""}
+        </div>
+        <div class="modal-actions">
+            ${submission.status === "pending" ? `<button class="btn-sm btn-success" id="approveKycBtn">Approve</button><button class="btn-sm btn-danger" id="rejectKycBtn">Reject</button>` : ""}
+            <button class="btn-sm btn-primary" id="closeUserModal">Close</button>
+        </div>
+    `;
+    document.getElementById("userModal").classList.add("show");
+    document.getElementById("closeUserModal").addEventListener("click", () => document.getElementById("userModal").classList.remove("show"));
+    const approveBtn = document.getElementById("approveKycBtn");
+    if (approveBtn) approveBtn.addEventListener("click", async () => { await approveKyc(id); document.getElementById("userModal").classList.remove("show"); });
+    const rejectBtn = document.getElementById("rejectKycBtn");
+    if (rejectBtn) rejectBtn.addEventListener("click", async () => { await rejectKyc(id); document.getElementById("userModal").classList.remove("show"); });
+}
+
+async function approveKyc(id) {
+    await api.post(`/api/admin/kyc/${id}/approve`);
+    loadKyc();
+    loadUsers();
+    loadOverview();
+}
+
+async function rejectKyc(id) {
+    const reason = prompt("Enter a rejection reason:");
+    if (reason === null) return;
+    await api.post(`/api/admin/kyc/${id}/reject`, { reason });
+    loadKyc();
+    loadUsers();
+    loadOverview();
+}
+
 // ---------------- Users ----------------
 let userPage = 1;
 async function loadUsers() {
@@ -311,6 +390,8 @@ async function loadUsers() {
         <tr>
             <td>${escapeHtml(u.name)}</td>
             <td>${escapeHtml(u.email)}</td>
+            <td>${u.email_verified ? `<span class="status-pill status-approved">Verified</span>` : `<span class="status-pill status-pending">Unverified</span>`}</td>
+            <td><span class="status-pill status-${u.kyc_status === "not_started" ? "not_started" : u.kyc_status}">${u.kyc_status}</span></td>
             <td>${u.is_donor ? "Yes" : "No"}</td>
             <td><span class="status-pill status-${u.status}">${u.status}</span></td>
             <td>${fmtDate(u.created_at)}</td>
@@ -322,7 +403,7 @@ async function loadUsers() {
                 <button class="btn-sm btn-danger" data-delete-user="${u.id}">Delete</button>
             </td>
         </tr>
-    `).join("") : `<tr><td colspan="6" class="empty-state">No users found.</td></tr>`;
+    `).join("") : `<tr><td colspan="8" class="empty-state">No users found.</td></tr>`;
 
     renderPagination("usersPagination", data, userPage, (p) => { userPage = p; loadUsers(); });
 
@@ -350,6 +431,8 @@ async function viewUser(id) {
         <h3>${escapeHtml(data.user.name)}</h3>
         <p style="color:var(--muted); font-size:0.85rem;">${escapeHtml(data.user.email)}</p>
         <p><span class="status-pill status-${data.user.status}">${data.user.status}</span> · Joined ${fmtDate(data.user.created_at)}</p>
+        <p><strong>Email Verification:</strong> ${data.user.email_verified ? "Verified" : "Unverified"}</p>
+        <p><strong>KYC Status:</strong> <span class="status-pill status-${data.user.kyc_status === "not_started" ? "not_started" : data.user.kyc_status}">${data.user.kyc_status}</span></p>
         <h4 style="margin-top:20px;">Donation History</h4>
         <div class="table-wrap">
             <table>

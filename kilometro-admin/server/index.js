@@ -12,6 +12,8 @@ const campaignsRoutes = require("./routes/campaigns.routes");
 const donationsRoutes = require("./routes/donations.routes");
 const usersRoutes = require("./routes/users.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
+const donorRoutes = require("./routes/donor.routes");
+const kycRoutes = require("./routes/kyc.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,7 +32,7 @@ app.use(helmet({
         },
     },
 }));
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "15mb" }));
 app.use(cookieParser());
 
 // ---------------------------------------------------------------------
@@ -44,6 +46,7 @@ app.use(express.static(path.join(__dirname, "..", "public", "site")));
 // everything else behind it requires a valid admin session.
 // ---------------------------------------------------------------------
 app.use("/api/auth", authRoutes);
+app.use("/api/donors", donorRoutes);
 
 // ---------------------------------------------------------------------
 // PROTECTED ADMIN API - every route below requires a valid JWT AND the
@@ -55,6 +58,7 @@ app.use("/api/admin/campaigns", verifyAdminToken, requireAdminRole, campaignsRou
 app.use("/api/admin/donations", verifyAdminToken, requireAdminRole, donationsRoutes);
 app.use("/api/admin/users", verifyAdminToken, requireAdminRole, usersRoutes);
 app.use("/api/admin/notifications", verifyAdminToken, requireAdminRole, notificationsRoutes);
+app.use("/api/admin/kyc", verifyAdminToken, requireAdminRole, kycRoutes);
 
 // ---------------------------------------------------------------------
 // ADMIN PAGES - gated at the SERVER level (not just client-side JS), so
@@ -67,6 +71,10 @@ app.use("/admin/js", express.static(path.join(adminPublicDir, "js")));
 
 app.get("/admin/login", (req, res) => {
     res.sendFile(path.join(adminPublicDir, "login.html"));
+});
+
+app.get(["/donate", "/donate.html"], (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "public", "site", "donate.html"));
 });
 
 app.get(["/admin", "/admin/dashboard"], guardAdminPage, (req, res) => {

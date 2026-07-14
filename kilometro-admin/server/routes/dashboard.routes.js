@@ -10,6 +10,10 @@ router.get("/overview", (req, res) => {
     const pendingCampaigns = db.prepare("SELECT COUNT(*) c FROM campaigns WHERE status = 'pending'").get().c;
     const totalUsers = db.prepare("SELECT COUNT(*) c FROM users WHERE role != 'admin'").get().c;
     const totalDonors = db.prepare("SELECT COUNT(*) c FROM users WHERE is_donor = 1").get().c;
+    const verifiedDonors = db.prepare("SELECT COUNT(*) c FROM users WHERE email_verified = 1 AND role != 'admin'").get().c;
+    const approvedKyc = db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'approved' AND role != 'admin'").get().c;
+    const pendingKyc = db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'pending' AND role != 'admin'").get().c;
+    const rejectedKyc = db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'rejected' AND role != 'admin'").get().c;
 
     const totalDonated = db.prepare(
         "SELECT COALESCE(SUM(amount),0) s FROM donations WHERE payment_status = 'successful'"
@@ -45,6 +49,10 @@ router.get("/overview", (req, res) => {
         users: {
             totalUsers,
             totalDonors,
+            verifiedDonors,
+            approvedKyc,
+            pendingKyc,
+            rejectedKyc,
         },
         payments: {
             // NOTE: real payment gateway is still under development.

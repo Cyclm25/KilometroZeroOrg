@@ -26,6 +26,7 @@
             <div class="nav-group-label">Management</div>
             <div class="nav-item" data-section="campaigns"><span class="icon">📢</span> Campaigns</div>
             <div class="nav-item" data-section="donations"><span class="icon">💳</span> Donations</div>
+            <div class="nav-item" data-section="kyc"><span class="icon">🛡️</span> KYC Review</div>
             <div class="nav-item" data-section="users"><span class="icon">👥</span> Users</div>
             <div class="nav-item" data-section="payments"><span class="icon">🏦</span> Payment Gateway</div>
         </nav>
@@ -142,6 +143,33 @@
                 </div>
             </section>
 
+            <!-- KYC -->
+            <section class="section" id="section-kyc">
+                <div class="panel">
+                    <div class="panel-head">
+                        <h3>Donor KYC Submissions</h3>
+                        <div class="filters">
+                            <input type="text" id="kycSearch" placeholder="Search donor name or email...">
+                            <select id="kycStatusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr>
+                                <th>Donor</th><th>Email Verified</th><th>KYC Status</th><th>Submitted</th><th>Reviewed</th><th>Actions</th>
+                            </tr></thead>
+                            <tbody id="kycTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="kycPagination"></div>
+                </div>
+            </section>
+
             <!-- USERS -->
             <section class="section" id="section-users">
                 <div class="panel">
@@ -159,7 +187,7 @@
                     <div class="table-wrap">
                         <table>
                             <thead><tr>
-                                <th>Name</th><th>Email</th><th>Donor?</th><th>Status</th><th>Joined</th><th>Actions</th>
+                                <th>Name</th><th>Email</th><th>Email Verified</th><th>KYC</th><th>Donor?</th><th>Status</th><th>Joined</th><th>Actions</th>
                             </tr></thead>
                             <tbody id="usersTableBody"></tbody>
                         </table>

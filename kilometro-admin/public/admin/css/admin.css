@@ -377,12 +377,16 @@ tbody tr:hover{ background:var(--bg); }
     text-transform:capitalize;
 }
 .status-active, .status-successful, .status-completed{ background:#e5f5ec; color:var(--success); }
+.status-approved{ background:#e5f5ec; color:var(--success); }
 .status-pending{ background:#fdf3e0; color:var(--warning); }
 .status-failed, .status-rejected, .status-suspended{ background:#fdecec; color:var(--danger); }
+.status-not_started{ background:#eee; color:var(--muted); }
 .status-archived{ background:#eee; color:var(--muted); }
 [data-theme="dark"] .status-active, [data-theme="dark"] .status-successful, [data-theme="dark"] .status-completed{ background:#0f2e1f; }
+[data-theme="dark"] .status-approved{ background:#0f2e1f; }
 [data-theme="dark"] .status-pending{ background:#332708; }
 [data-theme="dark"] .status-failed, [data-theme="dark"] .status-rejected, [data-theme="dark"] .status-suspended{ background:#331013; }
+[data-theme="dark"] .status-not_started{ background:#2a2727; }
 
 .filters{ display:flex; gap:10px; flex-wrap:wrap; }
 .filters input, .filters select{

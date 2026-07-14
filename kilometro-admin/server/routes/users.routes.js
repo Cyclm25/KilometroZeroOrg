@@ -25,7 +25,7 @@ router.get("/", (req, res) => {
 
     const total = db.prepare(`SELECT COUNT(*) c FROM users ${where}`).get(params).c;
     const rows = db.prepare(`
-        SELECT id, name, email, role, status, is_donor, created_at FROM users
+        SELECT id, name, email, role, status, is_donor, email_verified, kyc_status, created_at FROM users
         ${where} ORDER BY created_at DESC LIMIT @limit OFFSET @offset
     `).all({ ...params, limit: pageSize, offset: (page - 1) * pageSize });
 
@@ -34,7 +34,7 @@ router.get("/", (req, res) => {
 
 router.get("/:id", (req, res) => {
     const user = db.prepare(
-        "SELECT id, name, email, role, status, is_donor, created_at FROM users WHERE id = ? AND role != 'admin'"
+        "SELECT id, name, email, role, status, is_donor, email_verified, email_verified_at, kyc_status, kyc_submitted_at, kyc_reviewed_at, kyc_rejection_reason, created_at FROM users WHERE id = ? AND role != 'admin'"
     ).get(req.params.id);
     if (!user) return res.status(404).json({ error: "User not found." });
 

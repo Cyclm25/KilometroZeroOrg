@@ -83,6 +83,42 @@ CREATE TABLE IF NOT EXISTS login_attempts (
     ip TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS kyc_submissions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    id_type TEXT NOT NULL,
+    id_document_name TEXT NOT NULL,
+    id_document_mime TEXT NOT NULL,
+    id_document_ciphertext TEXT NOT NULL,
+    selfie_name TEXT,
+    selfie_mime TEXT,
+    selfie_ciphertext TEXT,
+    status TEXT NOT NULL CHECK(status IN ('pending','approved','rejected')) DEFAULT 'pending',
+    rejection_reason TEXT,
+    submitted_at TEXT NOT NULL DEFAULT (datetime('now')),
+    reviewed_at TEXT,
+    reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+);
 `);
+
+function ensureColumn(tableName, columnSql) {
+    const columnName = columnSql.split(/\s+/)[0];
+    const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+    if (!columns.some((column) => column.name === columnName)) {
+        db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnSql}`).run();
+    }
+}
+
+ensureColumn("users", "email_verified INTEGER NOT NULL DEFAULT 0");
+ensureColumn("users", "email_verified_at TEXT");
+ensureColumn("users", "email_verification_code_hash TEXT");
+ensureColumn("users", "email_verification_expires_at TEXT");
+ensureColumn("users", "kyc_status TEXT NOT NULL DEFAULT 'not_started' CHECK(kyc_status IN ('not_started','pending','approved','rejected'))");
+ensureColumn("users", "kyc_submitted_at TEXT");
+ensureColumn("users", "kyc_reviewed_at TEXT");
+ensureColumn("users", "kyc_rejection_reason TEXT");
+ensureColumn("users", "donor_session_version INTEGER NOT NULL DEFAULT 0");
+ensureColumn("donations", "donor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL");
 
 module.exports = db;

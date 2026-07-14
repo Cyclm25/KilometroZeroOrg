@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verified Donation Portal — Kilometro Zero</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+    --red:#a00021;
+    --red-dark:#720017;
+    --gold:#c8a45d;
+    --dark:#171717;
+    --text:#2f2f33;
+    --muted:#6d6b72;
+    --soft:#f7f3ef;
+    --panel:#ffffff;
+    --border:#e7ddd6;
+    --success:#137547;
+    --warning:#a36b08;
+}
+*{box-sizing:border-box;}
+body{
+    margin:0;
+    font-family:"Inter",sans-serif;
+    color:var(--text);
+    background:
+        radial-gradient(circle at top left, rgba(160,0,33,0.12), transparent 28%),
+        radial-gradient(circle at 90% 15%, rgba(200,164,93,0.18), transparent 24%),
+        linear-gradient(180deg, #fffaf6 0%, #f7f3ef 100%);
+}
+a{color:inherit;}
+.wrap{max-width:1180px; margin:0 auto; padding:28px 18px 56px;}
+.hero{
+    display:grid;
+    grid-template-columns:1.15fr 0.85fr;
+    gap:22px;
+    align-items:stretch;
+    margin-top:12px;
+}
+.brandbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:18px;
+}
+.brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    text-decoration:none;
+}
+.mark{
+    width:56px; height:56px; border-radius:18px;
+    background:linear-gradient(135deg, var(--red), #4b0410);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-family:"Cormorant Garamond",serif; font-size:1.8rem; font-weight:700;
+    box-shadow:0 16px 30px rgba(160,0,33,0.22);
+}
+.brand h1{
+    margin:0; font-family:"Cormorant Garamond",serif; font-size:1.9rem; line-height:1;
+}
+.brand p{margin:4px 0 0; color:var(--muted); font-size:0.78rem; letter-spacing:1.4px; text-transform:uppercase;}
+.ghost-link{
+    text-decoration:none;
+    padding:10px 14px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:rgba(255,255,255,0.8);
+    font-weight:600;
+    font-size:0.88rem;
+}
+.panel{
+    background:rgba(255,255,255,0.82);
+    border:1px solid rgba(231,221,214,0.9);
+    border-radius:24px;
+    box-shadow:0 25px 70px rgba(23,23,23,0.08);
+    backdrop-filter:blur(10px);
+}
+.hero-copy{padding:34px; position:relative; overflow:hidden;}
+.hero-copy::after{
+    content:""; position:absolute; inset:auto -80px -90px auto; width:220px; height:220px;
+    border-radius:50%; background:rgba(200,164,93,0.12);
+}
+.hero-badge{
+    display:inline-block; padding:8px 14px; border-radius:999px;
+    border:1px solid rgba(160,0,33,0.14); background:rgba(160,0,33,0.06);
+    color:var(--red); font-size:0.72rem; font-weight:800; letter-spacing:1.6px; text-transform:uppercase;
+}
+.hero-copy h2{
+    margin:18px 0 14px; font-family:"Cormorant Garamond",serif; font-size:clamp(2.5rem,4.8vw,4.6rem); line-height:0.95;
+}
+.hero-copy p{max-width:62ch; color:var(--muted); font-size:1rem; line-height:1.8;}
+.hero-points{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:24px;}
+.point{padding:14px 14px 16px; border-radius:18px; background:#fff; border:1px solid var(--border);}
+.point strong{display:block; font-size:0.88rem; margin-bottom:6px;}
+.point span{color:var(--muted); font-size:0.8rem; line-height:1.5;}
+.status-card{padding:24px; display:flex; flex-direction:column; gap:14px; justify-content:center;}
+.status-card h3{margin:0; font-size:1.2rem;}
+.status-pill{
+    display:inline-flex; align-items:center; justify-content:center; align-self:flex-start;
+    padding:7px 12px; border-radius:999px; font-size:0.76rem; font-weight:800; text-transform:uppercase; letter-spacing:0.8px;
+}
+.status-pending{background:#fdf3e0; color:var(--warning);}
+.status-approved, .status-verified{background:#e5f5ec; color:var(--success);}
+.status-rejected{background:#fdecec; color:#a00021;}
+.status-not_started{background:#eeeeee; color:var(--muted);}
+.status-box{padding:14px 16px; border-radius:16px; background:#fff; border:1px solid var(--border);}
+.status-box p{margin:0; color:var(--muted); font-size:0.9rem; line-height:1.6;}
+.grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:18px; margin-top:20px;}
+.card{padding:24px;}
+.card h3{margin:0 0 8px; font-size:1.15rem;}
+.card p.sub{margin:0 0 18px; color:var(--muted); font-size:0.9rem; line-height:1.6;}
+.field{margin-bottom:14px;}
+.field label{display:block; margin-bottom:6px; font-size:0.82rem; font-weight:700; color:#242329;}
+.field input, .field select, .field textarea{
+    width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:14px;
+    font:inherit; background:#fff; color:var(--text);
+}
+.field textarea{min-height:110px; resize:vertical;}
+.field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--red); box-shadow:0 0 0 4px rgba(160,0,33,0.08);}
+.row{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;}
+.btn{
+    appearance:none; border:none; border-radius:14px; padding:12px 16px; font-weight:800; cursor:pointer;
+    font-size:0.9rem; letter-spacing:0.3px;
+}
+.btn-primary{background:var(--red); color:#fff;}
+.btn-primary:hover{background:var(--red-dark);}
+.btn-secondary{background:#fff; color:var(--dark); border:1px solid var(--border);}
+.btn-secondary:hover{background:#faf7f4;}
+.btn-gold{background:var(--gold); color:#231a0f;}
+.inline-actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;}
+.helper{font-size:0.8rem; color:var(--muted); line-height:1.5; margin-top:8px;}
+.notice{
+    margin-top:14px; padding:14px 16px; border-radius:16px; border:1px solid rgba(160,0,33,0.14); background:rgba(160,0,33,0.05); color:#7b1930; display:none;
+}
+.notice.show{display:block;}
+.success{
+    margin-top:14px; padding:14px 16px; border-radius:16px; border:1px solid rgba(19,117,71,0.14); background:rgba(19,117,71,0.07); color:var(--success); display:none;
+}
+.success.show{display:block;}
+.hidden{display:none !important;}
+.upload-box{padding:14px; border:1px dashed #d8cec5; border-radius:16px; background:#fff;}
+.upload-box small{display:block; color:var(--muted); margin-top:6px; line-height:1.5;}
+.footer-note{margin-top:18px; color:var(--muted); font-size:0.8rem; line-height:1.6;}
+.donation-summary{display:grid; gap:14px; margin-top:10px;}
+.summary-row{display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); font-size:0.92rem;}
+.summary-row:last-child{border-bottom:none;}
+@media (max-width: 960px){
+    .hero, .grid, .hero-points, .row{grid-template-columns:1fr;}
+    .brandbar{gap:12px; flex-direction:column; align-items:flex-start;}
+}
+@media (max-width: 640px){
+    .wrap{padding-inline:14px;}
+    .hero-copy, .card, .status-card{padding:20px;}
+    .hero-copy h2{font-size:2.3rem;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="brandbar">
+        <a href="/" class="brand">
+            <div class="mark">KZ</div>
+            <div>
+                <h1>Kilometro Zero</h1>
+                <p>Verified Donation Portal</p>
+            </div>
+        </a>
+        <a href="/" class="ghost-link">Back to Home</a>
+    </div>
+
+    <section class="hero">
+        <div class="panel hero-copy">
+            <span class="hero-badge">Secure donor onboarding</span>
+            <h2>Verify your identity once, then donate with confidence.</h2>
+            <p>
+                Every donation starts with a verified email, then a KYC review to help protect the organization,
+                donors, and the communities we serve. Approved accounts can log in and donate without repeating the process.
+            </p>
+            <div class="hero-points">
+                <div class="point">
+                    <strong>Email ownership</strong>
+                    <span>Receive a one-time verification code before your account is created.</span>
+                </div>
+                <div class="point">
+                    <strong>Identity review</strong>
+                    <span>Submit a government-issued ID and selfie for manual KYC review.</span>
+                </div>
+                <div class="point">
+                    <strong>Protected access</strong>
+                    <span>Only verified, approved donors can complete a donation.</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel status-card">
+            <h3>Account status</h3>
+            <div class="status-pill status-not_started" id="statusPill">Not signed in</div>
+            <div class="status-box">
+                <p id="statusText">Create an account or log in to continue.</p>
+            </div>
+            <div class="inline-actions">
+                <button class="btn btn-secondary" id="refreshStatusBtn" type="button">Refresh status</button>
+                <button class="btn btn-secondary" id="logoutBtn" type="button">Log out</button>
+            </div>
+            <div class="footer-note">
+                If your email service is not configured in this environment, the verification code is returned for demo use only.
+                In production, connect a transactional email provider.
+            </div>
+        </div>
+    </section>
+
+    <section class="grid">
+        <div class="panel card">
+            <h3>Create your donor account</h3>
+            <p class="sub">Set up your account and trigger the email verification step.</p>
+            <form id="registerForm">
+                <div class="field">
+                    <label for="registerName">Full name</label>
+                    <input type="text" id="registerName" autocomplete="name" required>
+                </div>
+                <div class="field">
+                    <label for="registerEmail">Email address</label>
+                    <input type="email" id="registerEmail" autocomplete="email" required>
+                </div>
+                <div class="field">
+                    <label for="registerPassword">Password</label>
+                    <input type="password" id="registerPassword" autocomplete="new-password" minlength="10" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Send verification code</button>
+                <div class="success" id="registerSuccess"></div>
+                <div class="notice" id="registerNotice"></div>
+            </form>
+        </div>
+
+        <div class="panel card">
+            <h3>Verify email ownership</h3>
+            <p class="sub">Enter the six-digit code sent to your email address.</p>
+            <form id="verifyForm">
+                <div class="field">
+                    <label for="verifyEmail">Email address</label>
+                    <input type="email" id="verifyEmail" autocomplete="email" required>
+                </div>
+                <div class="field">
+                    <label for="verifyCode">Verification code</label>
+                    <input type="text" id="verifyCode" inputmode="numeric" maxlength="6" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Confirm email</button>
+                <div class="success" id="verifySuccess"></div>
+                <div class="notice" id="verifyNotice"></div>
+            </form>
+        </div>
+
+        <div class="panel card">
+            <h3>Submit KYC documents</h3>
+            <p class="sub">Upload your ID and a selfie. The submission stays pending until an administrator reviews it.</p>
+            <form id="kycForm">
+                <div class="field">
+                    <label for="kycIdType">ID type</label>
+                    <select id="kycIdType" required>
+                        <option value="">Select ID type</option>
+                        <option value="passport">Passport</option>
+                        <option value="driver_license">Driver's License</option>
+                        <option value="national_id">National ID</option>
+                        <option value="other">Other Government ID</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="kycIdNumber">ID number</label>
+                    <input type="text" id="kycIdNumber" autocomplete="off" required>
+                </div>
+                <div class="field upload-box">
+                    <label for="kycDocument">Government-issued ID file</label>
+                    <input type="file" id="kycDocument" accept="image/png,image/jpeg,application/pdf" required>
+                    <small>Accepted: JPG, PNG, or PDF. Maximum 5 MB.</small>
+                </div>
+                <div class="field upload-box">
+                    <label for="kycSelfie">Selfie file</label>
+                    <input type="file" id="kycSelfie" accept="image/png,image/jpeg" required>
+                    <small>Accepted: JPG or PNG. Maximum 5 MB.</small>
+                </div>
+                <button class="btn btn-primary" type="submit">Submit KYC</button>
+                <div class="success" id="kycSuccess"></div>
+                <div class="notice" id="kycNotice"></div>
+            </form>
+        </div>
+
+        <div class="panel card">
+            <h3>Log in to donate</h3>
+            <p class="sub">Approved donors can return later and sign in with the same verified account.</p>
+            <form id="loginForm">
+                <div class="field">
+                    <label for="loginEmail">Email address</label>
+                    <input type="email" id="loginEmail" autocomplete="email" required>
+                </div>
+                <div class="field">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-primary" type="submit">Log in</button>
+                <div class="success" id="loginSuccess"></div>
+                <div class="notice" id="loginNotice"></div>
+            </form>
+        </div>
+
+        <div class="panel card" style="grid-column:1 / -1;" id="donationPanel">
+            <h3>Make a verified donation</h3>
+            <p class="sub">This form is only available after email verification and KYC approval.</p>
+            <form id="donationForm" class="hidden">
+                <div class="row">
+                    <div class="field">
+                        <label for="donationAmount">Amount (PHP)</label>
+                        <input type="number" id="donationAmount" min="1" step="1" placeholder="1000" required>
+                    </div>
+                    <div class="field">
+                        <label for="donationPurpose">Donation note</label>
+                        <input type="text" id="donationPurpose" placeholder="General support" maxlength="120">
+                    </div>
+                </div>
+                <button class="btn btn-gold" type="submit">Complete donation</button>
+                <div class="success" id="donationSuccess"></div>
+                <div class="notice" id="donationNotice"></div>
+            </form>
+            <div id="donationLocked" class="status-box">
+                <p>
+                    Once your account is approved, the donation form will unlock automatically. Until then, please finish
+                    verification or sign in with an approved donor account.
+                </p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="/js/donate.js"></script>
+</body>
+</html>
