@@ -120,5 +120,8 @@ ensureColumn("users", "kyc_reviewed_at TEXT");
 ensureColumn("users", "kyc_rejection_reason TEXT");
 ensureColumn("users", "donor_session_version INTEGER NOT NULL DEFAULT 0");
 ensureColumn("donations", "donor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL");
+ensureColumn("donations", "receipt_email_sent INTEGER NOT NULL DEFAULT 0");
+ensureColumn("donations", "receipt_email_sent_at TEXT");
+ensureColumn("donations", "receipt_email_error TEXT");
 
 module.exports = db;

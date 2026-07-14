@@ -14,7 +14,7 @@ const {
     hashValue,
     createVerificationCode,
 } = require("../utils/security");
-const { sendVerificationEmail, hasSmtpConfig } = require("../utils/mailer");
+const { sendVerificationEmail, sendDonationReceiptEmail, hasSmtpConfig } = require("../utils/mailer");
 
 const router = express.Router();
 
@@ -379,7 +379,7 @@ router.post("/kyc", verifyDonorToken, requireVerifiedEmail, (req, res) => {
     res.json({ success: true, message: "KYC submission received. Review is pending.", donor: publicDonor(updatedDonor) });
 });
 
-router.post("/donations", verifyDonorToken, requireKycApproved, (req, res) => {
+router.post("/donations", verifyDonorToken, requireKycApproved, async (req, res) => {
     const amount = Number(req.body.amount || 0);
     const campaignId = req.body.campaignId ? Number(req.body.campaignId) : null;
     const note = String(req.body.note || "").trim();
@@ -395,28 +395,47 @@ router.post("/donations", verifyDonorToken, requireKycApproved, (req, res) => {
         }
     }
 
+    const campaign = campaignId ? db.prepare("SELECT title FROM campaigns WHERE id = ?").get(campaignId) : null;
+
     const insertDonation = db.prepare(`
         INSERT INTO donations (campaign_id, donor_user_id, donor_name, donor_email, is_public, amount, payment_status, payment_method)
         VALUES (?, ?, ?, ?, 1, ?, 'successful', 'Verified Portal')
     `);
 
-    const transaction = db.transaction(() => {
-        const donation = insertDonation.run(campaignId, req.donor.id, req.donor.name, req.donor.email, amount);
+    const donation = db.transaction(() => {
+        const inserted = insertDonation.run(campaignId, req.donor.id, req.donor.name, req.donor.email, amount);
         if (campaignId) {
             db.prepare("UPDATE campaigns SET raised_amount = raised_amount + ? , updated_at = datetime('now') WHERE id = ?").run(amount, campaignId);
         }
         db.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('new_donation', ?, 0)").run(
             `Verified donor ${req.donor.name} donated ₱${amount.toLocaleString("en-PH", { maximumFractionDigits: 0 })}`
         );
-        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)" ).run(
             "verified_donation_created",
             `Verified donation of ₱${amount.toLocaleString("en-PH", { maximumFractionDigits: 0 })} by ${req.donor.email}${note ? ` (${note})` : ""}`
         );
-        return donation;
-    });
+        return inserted;
+    })();
 
-    const result = transaction();
-    res.json({ success: true, donationId: result.lastInsertRowid });
+    let receiptEmailSent = 0;
+    let receiptEmailError = null;
+    try {
+        await sendDonationReceiptEmail(req.donor.email, req.donor.name, amount, donation.lastInsertRowid, campaign ? campaign.title : null);
+        receiptEmailSent = 1;
+    } catch (err) {
+        receiptEmailError = err.message;
+        console.warn(`Donation receipt email failed for ${req.donor.email}: ${err.message}`);
+    }
+
+    db.prepare(`
+        UPDATE donations
+        SET receipt_email_sent = ?,
+            receipt_email_sent_at = CASE WHEN ? = 1 THEN datetime('now') ELSE receipt_email_sent_at END,
+            receipt_email_error = ?
+        WHERE id = ?
+    `).run(receiptEmailSent, receiptEmailSent, receiptEmailError, donation.lastInsertRowid);
+
+    res.json({ success: true, donationId: donation.lastInsertRowid, receiptEmailSent: !!receiptEmailSent });
 });
 
 module.exports = router;

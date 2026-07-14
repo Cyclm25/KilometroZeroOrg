@@ -44,7 +44,38 @@ async function sendVerificationEmail(to, code, name) {
     });
 }
 
+async function sendDonationReceiptEmail(to, name, amount, donationId, campaignTitle) {
+    const transport = createMailer();
+    if (!transport) {
+        throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in .env.");
+    }
+
+    const formattedAmount = Number(amount || 0).toLocaleString("en-PH", { maximumFractionDigits: 0 });
+    const campaignLabel = campaignTitle || "General Donation";
+
+    await transport.sendMail({
+        from: process.env.SMTP_FROM,
+        to,
+        subject: `Kilometro Zero receipt #${donationId}`,
+        text: `Hello ${name || "donor"},\n\nThank you for your donation to Kilometro Zero.\n\nDonation ID: ${donationId}\nAmount: ₱${formattedAmount}\nCampaign: ${campaignLabel}\n\nWe appreciate your support.`,
+        html: `
+            <div style="font-family:Inter,Arial,sans-serif; line-height:1.6; color:#222;">
+                <h2 style="margin:0 0 12px; color:#a00021;">Donation receipt #${donationId}</h2>
+                <p>Hello ${name || "donor"},</p>
+                <p>Your donation has been recorded successfully.</p>
+                <ul style="padding-left:18px;">
+                    <li><strong>Donation ID:</strong> ${donationId}</li>
+                    <li><strong>Amount:</strong> ₱${formattedAmount}</li>
+                    <li><strong>Campaign:</strong> ${campaignLabel}</li>
+                </ul>
+                <p>We appreciate your support of Kilometro Zero.</p>
+            </div>
+        `,
+    });
+}
+
 module.exports = {
     hasSmtpConfig,
     sendVerificationEmail,
+    sendDonationReceiptEmail,
 };

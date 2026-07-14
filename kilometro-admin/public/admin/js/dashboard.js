@@ -284,10 +284,11 @@ async function loadDonations() {
             <td>${escapeHtml(d.campaign_title || "—")}</td>
             <td>${peso(d.amount)}</td>
             <td><span class="status-pill status-${d.payment_status}">${d.payment_status}</span></td>
+            <td>${d.receipt_email_sent ? `<span class="status-pill status-approved">Sent</span>` : `<span class="status-pill status-pending">Pending</span>`}${d.receipt_email_error ? `<div style="color:var(--danger); font-size:0.72rem; margin-top:4px;">${escapeHtml(d.receipt_email_error)}</div>` : ""}</td>
             <td>${escapeHtml(d.payment_method)}</td>
             <td>${fmtDate(d.created_at)}</td>
         </tr>
-    `).join("") : `<tr><td colspan="6" class="empty-state">No donations found.</td></tr>`;
+    `).join("") : `<tr><td colspan="7" class="empty-state">No donations found.</td></tr>`;
 
     renderPagination("donationsPagination", data, donationPage, (p) => { donationPage = p; loadDonations(); });
 }
