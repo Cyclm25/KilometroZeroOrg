@@ -92,9 +92,17 @@ async function apiRequest(path, options = {}) {
         headers: { "Content-Type": "application/json" },
         ...options,
     });
-    const body = await res.json().catch(() => ({}));
+    const raw = await res.text();
+    let body = {};
+    if (raw) {
+        try {
+            body = JSON.parse(raw);
+        } catch (err) {
+            body = { error: raw };
+        }
+    }
     if (!res.ok) {
-        throw new Error(body.error || "Request failed.");
+        throw new Error(body.error || `Request failed (${res.status})`);
     }
     return body;
 }
