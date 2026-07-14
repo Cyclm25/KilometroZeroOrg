@@ -80,9 +80,12 @@ app.get(["/donate", "/donate.html"], (req, res) => {
 app.get(["/admin", "/admin/dashboard"], guardAdminPage, (req, res) => {
     res.sendFile(path.join(adminPublicDir, "dashboard.html"));
 });
-
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "../public/site/index.html"));
+});
 // Any admin-area request that fails auth ends up here instead of leaking
 // any dashboard markup or data.
+
 app.get("/admin/access-denied", (req, res) => {
     res.status(403).sendFile(path.join(adminPublicDir, "access-denied.html"));
 });
