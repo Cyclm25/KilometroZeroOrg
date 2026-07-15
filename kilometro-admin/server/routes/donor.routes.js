@@ -115,6 +115,7 @@ router.post("/register", authLimiter, async (req, res) => {
     try {
         await sendVerificationEmail(email, verificationCode, name);
     } catch (err) {
+        console.error(`[register] sendVerificationEmail failed for ${email}:`, err);
         if (process.env.NODE_ENV === "production" || hasSmtpConfig()) {
             return res.status(500).json({ error: err.message });
         }
