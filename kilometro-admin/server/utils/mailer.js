@@ -1,52 +1,67 @@
-// Uses Resend's HTTPS API (https://resend.com) instead of raw SMTP.
-// Render's free tier blocks outbound traffic on SMTP ports 25/465/587,
-// but HTTPS (port 443) is never blocked, so this sidesteps that entirely.
+// Uses Brevo's HTTPS Transactional Email API (https://www.brevo.com) instead
+// of SMTP. Render's free tier blocks outbound SMTP ports 25/465/587 (this
+// includes Brevo's own SMTP relay), but HTTPS (port 443) is never blocked,
+// so this sidesteps that entirely - same reasoning as the earlier Resend
+// version.
+//
+// Brevo was chosen over Resend here because it supports verifying a single
+// SENDER EMAIL ADDRESS (via a 6-digit code sent to your inbox) rather than
+// requiring a verified DOMAIN. That means you can send to ANY recipient
+// without owning/buying a domain first.
+//
+// Setup:
+//   1. Sign up free at https://www.brevo.com
+//   2. Settings -> Senders, Domains, IPs -> Senders -> add your email
+//      (e.g. your Gmail address) -> verify with the 6-digit code Brevo emails you
+//   3. Settings -> SMTP & API -> API Keys -> generate a new API key
 //
 // Required env vars:
-//   RESEND_API_KEY - from https://resend.com/api-keys
-//   RESEND_FROM     - a verified sender, e.g. "Kilometro Zero <onboarding@resend.dev>"
-//                      (Resend gives you a free @resend.dev sending address
-//                      for testing with no domain setup needed; for a custom
-//                      domain you verify it once in the Resend dashboard)
+//   BREVO_API_KEY     - the API key from step 3 above
+//   BREVO_SENDER_EMAIL - the verified sender email from step 2 above
+//   BREVO_SENDER_NAME  - (optional) display name, defaults to "Kilometro Zero"
 
-const RESEND_API_URL = "https://api.resend.com/emails";
+const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
 function hasSmtpConfig() {
     // Kept the same function name so donor_routes.js / index.js don't need
-    // to change; it now just checks Resend config instead of SMTP config.
-    return !!(process.env.RESEND_API_KEY && process.env.RESEND_FROM);
+    // to change; it now just checks Brevo config instead of raw SMTP config.
+    return !!(process.env.BREVO_API_KEY && process.env.BREVO_SENDER_EMAIL);
 }
 
-async function sendViaResend({ to, subject, text, html }) {
+async function sendViaBrevo({ to, subject, text, html }) {
     if (!hasSmtpConfig()) {
-        throw new Error("Resend is not configured. Set RESEND_API_KEY and RESEND_FROM in .env.");
+        throw new Error("Brevo is not configured. Set BREVO_API_KEY and BREVO_SENDER_EMAIL in .env.");
     }
 
-    const response = await fetch(RESEND_API_URL, {
+    const response = await fetch(BREVO_API_URL, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+            "api-key": process.env.BREVO_API_KEY,
             "Content-Type": "application/json",
+            "Accept": "application/json",
         },
         body: JSON.stringify({
-            from: process.env.RESEND_FROM,
-            to,
+            sender: {
+                name: process.env.BREVO_SENDER_NAME || "Kilometro Zero",
+                email: process.env.BREVO_SENDER_EMAIL,
+            },
+            to: [{ email: to }],
             subject,
-            text,
-            html,
+            textContent: text,
+            htmlContent: html,
         }),
     });
 
     if (!response.ok) {
         const errBody = await response.text().catch(() => "");
-        throw new Error(`Resend API error (${response.status}): ${errBody || response.statusText}`);
+        throw new Error(`Brevo API error (${response.status}): ${errBody || response.statusText}`);
     }
 
     return response.json();
 }
 
 async function sendVerificationEmail(to, code, name) {
-    await sendViaResend({
+    await sendViaBrevo({
         to,
         subject: "Kilometro Zero email verification code",
         text: `Hello ${name || "donor"},\n\nYour Kilometro Zero verification code is: ${code}\n\nThis code expires in 15 minutes. If you did not request it, you can ignore this message.`,
@@ -67,7 +82,7 @@ async function sendDonationReceiptEmail(to, name, amount, donationId, campaignTi
     const formattedAmount = Number(amount || 0).toLocaleString("en-PH", { maximumFractionDigits: 0 });
     const campaignLabel = campaignTitle || "General Donation";
 
-    await sendViaResend({
+    await sendViaBrevo({
         to,
         subject: `Kilometro Zero receipt #${donationId}`,
         text: `Hello ${name || "donor"},\n\nThank you for your donation to Kilometro Zero.\n\nDonation ID: ${donationId}\nAmount: ₱${formattedAmount}\nCampaign: ${campaignLabel}\n\nWe appreciate your support.`,
