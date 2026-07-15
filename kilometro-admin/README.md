@@ -36,6 +36,7 @@ Edit `.env` and set:
   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
   ```
 - `COOKIE_SECURE=true` once you deploy behind HTTPS (keep `false` for local `http://localhost` testing)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — required for donor verification codes and donation receipt emails
 
 **Never commit `.env` to git** — it's already in `.gitignore`.
 
@@ -123,13 +124,17 @@ dashboard will display real figures automatically — no frontend changes needed
 
 This is a standard Node.js app — it will run on Render, Railway, Fly.io, a VPS, etc.
 Key things to set on your host:
-1. Environment variables from `.env` (especially `JWT_SECRET`, `ADMIN_EMAIL/PASSWORD`, `COOKIE_SECURE=true`)
+1. Environment variables from `.env` (especially `JWT_SECRET`, `ADMIN_EMAIL/PASSWORD`, `COOKIE_SECURE=true`, and the SMTP values above)
 2. Run `npm run seed:admin` once after first deploy
 3. Serve behind HTTPS (required for `COOKIE_SECURE=true` and for the cookie to actually be sent)
 4. The SQLite file (`server/db/kilometro.db`) needs to live on persistent storage — if your
    host wipes the filesystem on redeploy, either use a host with a persistent disk/volume,
    or swap SQLite for a hosted Postgres/MySQL database (the query layer in `server/db` is
    isolated so this swap only touches that one file).
+
+If verification emails are not arriving on Render, the first thing to check is that the SMTP
+environment variables are actually present in the Render service settings. Without them, the
+server cannot send verification codes.
 
 ## Extending it later
 

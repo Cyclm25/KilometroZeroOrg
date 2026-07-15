@@ -15,6 +15,7 @@ const usersRoutes = require("./routes/users.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
 const donorRoutes = require("./routes/donor.routes");
 const kycRoutes = require("./routes/kyc.routes");
+const { hasSmtpConfig } = require("./utils/mailer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -105,5 +106,9 @@ seedAdmin()
             console.log(`Kilometro Zero server running on http://localhost:${PORT}`);
             console.log(`Public site:      http://localhost:${PORT}/`);
             console.log(`Admin login:      http://localhost:${PORT}/admin/login`);
+
+            if (!hasSmtpConfig()) {
+                console.warn("[mail] SMTP is not configured. Donor verification emails and donation receipts will not be sent until SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM are set.");
+            }
         });
     });
