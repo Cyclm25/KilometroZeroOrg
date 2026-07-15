@@ -1,4 +1,11 @@
 // server/index.js
+// MUST run before any other requires. Render's outbound network can't
+// route IPv6, but Node's DNS resolver returns Gmail's IPv6 address first
+// by default, causing ENETUNREACH when sending SMTP mail. This forces
+// IPv4 to be preferred for every DNS lookup in this process.
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
+
 require("dotenv").config();
 const path = require("path");
 const express = require("express");
