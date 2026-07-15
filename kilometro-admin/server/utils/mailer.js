@@ -1,36 +1,52 @@
-const nodemailer = require("nodemailer");
+// Uses Resend's HTTPS API (https://resend.com) instead of raw SMTP.
+// Render's free tier blocks outbound traffic on SMTP ports 25/465/587,
+// but HTTPS (port 443) is never blocked, so this sidesteps that entirely.
+//
+// Required env vars:
+//   RESEND_API_KEY - from https://resend.com/api-keys
+//   RESEND_FROM     - a verified sender, e.g. "Kilometro Zero <onboarding@resend.dev>"
+//                      (Resend gives you a free @resend.dev sending address
+//                      for testing with no domain setup needed; for a custom
+//                      domain you verify it once in the Resend dashboard)
+
+const RESEND_API_URL = "https://api.resend.com/emails";
 
 function hasSmtpConfig() {
-    return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS && process.env.SMTP_FROM);
+    // Kept the same function name so donor_routes.js / index.js don't need
+    // to change; it now just checks Resend config instead of SMTP config.
+    return !!(process.env.RESEND_API_KEY && process.env.RESEND_FROM);
 }
 
-function createMailer() {
+async function sendViaResend({ to, subject, text, html }) {
     if (!hasSmtpConfig()) {
-        return null;
+        throw new Error("Resend is not configured. Set RESEND_API_KEY and RESEND_FROM in .env.");
     }
 
-    return nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587", 10),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+    const response = await fetch(RESEND_API_URL, {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+            "Content-Type": "application/json",
         },
-        // Render's outbound network can't route IPv6, but Gmail's SMTP
-        // resolves to an IPv6 address first (ENETUNREACH). Force IPv4.
-        family: 4,
+        body: JSON.stringify({
+            from: process.env.RESEND_FROM,
+            to,
+            subject,
+            text,
+            html,
+        }),
     });
+
+    if (!response.ok) {
+        const errBody = await response.text().catch(() => "");
+        throw new Error(`Resend API error (${response.status}): ${errBody || response.statusText}`);
+    }
+
+    return response.json();
 }
 
 async function sendVerificationEmail(to, code, name) {
-    const transport = createMailer();
-    if (!transport) {
-        throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in .env.");
-    }
-
-    await transport.sendMail({
-        from: process.env.SMTP_FROM,
+    await sendViaResend({
         to,
         subject: "Kilometro Zero email verification code",
         text: `Hello ${name || "donor"},\n\nYour Kilometro Zero verification code is: ${code}\n\nThis code expires in 15 minutes. If you did not request it, you can ignore this message.`,
@@ -48,16 +64,10 @@ async function sendVerificationEmail(to, code, name) {
 }
 
 async function sendDonationReceiptEmail(to, name, amount, donationId, campaignTitle) {
-    const transport = createMailer();
-    if (!transport) {
-        throw new Error("SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and SMTP_FROM in .env.");
-    }
-
     const formattedAmount = Number(amount || 0).toLocaleString("en-PH", { maximumFractionDigits: 0 });
     const campaignLabel = campaignTitle || "General Donation";
 
-    await transport.sendMail({
-        from: process.env.SMTP_FROM,
+    await sendViaResend({
         to,
         subject: `Kilometro Zero receipt #${donationId}`,
         text: `Hello ${name || "donor"},\n\nThank you for your donation to Kilometro Zero.\n\nDonation ID: ${donationId}\nAmount: ₱${formattedAmount}\nCampaign: ${campaignLabel}\n\nWe appreciate your support.`,
