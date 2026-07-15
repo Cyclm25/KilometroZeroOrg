@@ -17,6 +17,9 @@ function createMailer() {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS,
         },
+        // Render's outbound network can't route IPv6, but Gmail's SMTP
+        // resolves to an IPv6 address first (ENETUNREACH). Force IPv4.
+        family: 4,
     });
 }
 
