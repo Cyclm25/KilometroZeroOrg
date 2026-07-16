@@ -220,7 +220,53 @@ async function donate() {
         method: "POST",
         body: JSON.stringify({ amount, note }),
     });
-    showMessage(refs.donationSuccess, `Donation accepted. Reference #${data.donationId}.`);
+    // Send the donor to PayMongo's hosted checkout page to actually pay.
+    // They'll be redirected back to this page afterward (see checkPaymentReturn()).
+    window.location.href = data.checkoutUrl;
+}
+
+async function checkDonationStatusOnce(donationId) {
+    return apiRequest(`/api/donors/donations/${donationId}/status`);
+}
+
+async function pollDonationStatus(donationId, { attempts = 10, delayMs = 1500 } = {}) {
+    for (let i = 0; i < attempts; i++) {
+        const result = await checkDonationStatusOnce(donationId);
+        if (result.status === "successful" || result.status === "failed") {
+            return result;
+        }
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    return checkDonationStatusOnce(donationId);
+}
+
+async function checkPaymentReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const donationId = params.get("donation");
+    const status = params.get("status");
+    if (!donationId) return;
+
+    // Clean the URL so refreshing the page doesn't re-trigger this.
+    window.history.replaceState({}, "", window.location.pathname);
+
+    if (status === "cancelled") {
+        showMessage(refs.donationNotice, "Payment was cancelled. No charge was made.");
+        return;
+    }
+
+    showMessage(refs.donationSuccess, "Confirming your payment, please wait...");
+    try {
+        const result = await pollDonationStatus(donationId);
+        if (result.status === "successful") {
+            showMessage(refs.donationSuccess, `Payment confirmed. Thank you! Reference #${result.donationId}.`);
+        } else if (result.status === "failed") {
+            showMessage(refs.donationNotice, "The payment did not go through. Please try again.");
+        } else {
+            showMessage(refs.donationNotice, "We haven't received confirmation yet. Check back shortly, or contact support if this persists.");
+        }
+    } catch (err) {
+        showMessage(refs.donationNotice, "Could not confirm payment status. Please refresh in a moment.");
+    }
 }
 
 async function logout() {
@@ -257,3 +303,4 @@ document.getElementById("donationForm").addEventListener("submit", async (e) => 
 });
 
 refreshStatus();
+checkPaymentReturn();

@@ -22,6 +22,7 @@ const usersRoutes = require("./routes/users.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
 const donorRoutes = require("./routes/donor.routes");
 const kycRoutes = require("./routes/kyc.routes");
+const paymongoWebhookRoutes = require("./routes/paymongo_webhook.routes");
 const { hasSmtpConfig } = require("./utils/mailer");
 
 const app = express();
@@ -41,6 +42,12 @@ app.use(helmet({
         },
     },
 }));
+
+// MUST be registered before express.json() below - PayMongo webhook
+// signature verification needs the exact raw bytes of the request body.
+// Once express.json() runs for a request, those raw bytes are gone.
+app.use("/api/webhooks/paymongo", express.raw({ type: "application/json" }), paymongoWebhookRoutes);
+
 app.use(express.json({ limit: "15mb" }));
 app.use(cookieParser());
 

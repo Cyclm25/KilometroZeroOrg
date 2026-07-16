@@ -15,6 +15,7 @@ const {
     createVerificationCode,
 } = require("../utils/security");
 const { sendVerificationEmail, sendDonationReceiptEmail, hasSmtpConfig } = require("../utils/mailer");
+const { createDonationCheckoutSession } = require("../utils/paymongo");
 
 const router = express.Router();
 
@@ -398,45 +399,61 @@ router.post("/donations", verifyDonorToken, requireKycApproved, async (req, res)
 
     const campaign = campaignId ? db.prepare("SELECT title FROM campaigns WHERE id = ?").get(campaignId) : null;
 
+    // Donation starts out 'pending' - it only becomes 'successful' once the
+    // PayMongo webhook confirms real payment (see paymongo_webhook.routes.js).
     const insertDonation = db.prepare(`
         INSERT INTO donations (campaign_id, donor_user_id, donor_name, donor_email, is_public, amount, payment_status, payment_method)
-        VALUES (?, ?, ?, ?, 1, ?, 'successful', 'Verified Portal')
+        VALUES (?, ?, ?, ?, 1, ?, 'pending', 'PayMongo')
     `);
 
     const donation = db.transaction(() => {
         const inserted = insertDonation.run(campaignId, req.donor.id, req.donor.name, req.donor.email, amount);
-        if (campaignId) {
-            db.prepare("UPDATE campaigns SET raised_amount = raised_amount + ? , updated_at = datetime('now') WHERE id = ?").run(amount, campaignId);
-        }
-        db.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('new_donation', ?, 0)").run(
-            `Verified donor ${req.donor.name} donated ₱${amount.toLocaleString("en-PH", { maximumFractionDigits: 0 })}`
-        );
-        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)" ).run(
-            "verified_donation_created",
-            `Verified donation of ₱${amount.toLocaleString("en-PH", { maximumFractionDigits: 0 })} by ${req.donor.email}${note ? ` (${note})` : ""}`
+        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+            "donation_checkout_started",
+            `Donor ${req.donor.email} started checkout for ₱${amount.toLocaleString("en-PH", { maximumFractionDigits: 0 })}${note ? ` (${note})` : ""}`
         );
         return inserted;
     })();
 
-    let receiptEmailSent = 0;
-    let receiptEmailError = null;
+    const donationId = donation.lastInsertRowid;
+
+    let session;
     try {
-        await sendDonationReceiptEmail(req.donor.email, req.donor.name, amount, donation.lastInsertRowid, campaign ? campaign.title : null);
-        receiptEmailSent = 1;
+        session = await createDonationCheckoutSession({
+            donationId,
+            amount,
+            donorName: req.donor.name,
+            donorEmail: req.donor.email,
+            campaignTitle: campaign ? campaign.title : null,
+        });
     } catch (err) {
-        receiptEmailError = err.message;
-        console.warn(`Donation receipt email failed for ${req.donor.email}: ${err.message}`);
+        console.error(`[donations] failed to create PayMongo checkout session for donation #${donationId}:`, err);
+        db.prepare("UPDATE donations SET payment_status = 'failed' WHERE id = ?").run(donationId);
+        return res.status(502).json({ error: "Could not start the payment process. Please try again." });
     }
 
-    db.prepare(`
-        UPDATE donations
-        SET receipt_email_sent = ?,
-            receipt_email_sent_at = CASE WHEN ? = 1 THEN datetime('now') ELSE receipt_email_sent_at END,
-            receipt_email_error = ?
-        WHERE id = ?
-    `).run(receiptEmailSent, receiptEmailSent, receiptEmailError, donation.lastInsertRowid);
+    db.prepare("UPDATE donations SET paymongo_checkout_session_id = ? WHERE id = ?").run(session.id, donationId);
 
-    res.json({ success: true, donationId: donation.lastInsertRowid, receiptEmailSent: !!receiptEmailSent });
+    res.json({ success: true, donationId, checkoutUrl: session.checkoutUrl });
+});
+
+// Lets the frontend poll for payment confirmation after the donor is
+// redirected back from PayMongo's hosted checkout page.
+router.get("/donations/:id/status", verifyDonorToken, (req, res) => {
+    const donation = db.prepare(
+        "SELECT id, donor_user_id, amount, payment_status, receipt_email_sent FROM donations WHERE id = ?"
+    ).get(req.params.id);
+
+    if (!donation || donation.donor_user_id !== req.donor.id) {
+        return res.status(404).json({ error: "Donation not found." });
+    }
+
+    res.json({
+        donationId: donation.id,
+        amount: donation.amount,
+        status: donation.payment_status,
+        receiptEmailSent: !!donation.receipt_email_sent,
+    });
 });
 
 module.exports = router;

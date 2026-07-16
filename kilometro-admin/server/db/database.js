@@ -123,5 +123,7 @@ ensureColumn("donations", "donor_user_id INTEGER REFERENCES users(id) ON DELETE 
 ensureColumn("donations", "receipt_email_sent INTEGER NOT NULL DEFAULT 0");
 ensureColumn("donations", "receipt_email_sent_at TEXT");
 ensureColumn("donations", "receipt_email_error TEXT");
+ensureColumn("donations", "paymongo_checkout_session_id TEXT");
+ensureColumn("donations", "paymongo_payment_id TEXT");
 
 module.exports = db;
