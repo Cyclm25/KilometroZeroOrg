@@ -3,12 +3,12 @@ const express = require("express");
 const db = require("../db/database");
 const router = express.Router();
 
-function logActivity(action, details) {
-    db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(action, details);
+async function logActivity(action, details) {
+    await db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(action, details);
 }
 
 // GET /api/admin/campaigns?search=&status=&sort=created_at&dir=desc&page=1&pageSize=10
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
     const { search = "", status = "", sort = "created_at", dir = "desc" } = req.query;
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize || "10", 10)));
@@ -28,8 +28,8 @@ router.get("/", (req, res) => {
         params.status = status;
     }
 
-    const total = db.prepare(`SELECT COUNT(*) c FROM campaigns ${where}`).get(params).c;
-    const rows = db.prepare(`
+    const total = (await db.prepare(`SELECT COUNT(*) c FROM campaigns ${where}`).get(params)).c;
+    const rows = await db.prepare(`
         SELECT * FROM campaigns ${where}
         ORDER BY ${sortCol} ${sortDir}
         LIMIT @limit OFFSET @offset
@@ -38,17 +38,17 @@ router.get("/", (req, res) => {
     res.json({ data: rows, total, page, pageSize });
 });
 
-router.get("/:id", (req, res) => {
-    const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+router.get("/:id", async (req, res) => {
+    const campaign = await db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
     if (!campaign) return res.status(404).json({ error: "Campaign not found." });
-    const donations = db.prepare(
+    const donations = await db.prepare(
         "SELECT * FROM donations WHERE campaign_id = ? ORDER BY created_at DESC"
     ).all(req.params.id);
     res.json({ campaign, donations });
 });
 
-router.patch("/:id", (req, res) => {
-    const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+router.patch("/:id", async (req, res) => {
+    const campaign = await db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
     if (!campaign) return res.status(404).json({ error: "Campaign not found." });
 
     const fields = ["title", "description", "category", "goal_amount"];
@@ -63,40 +63,40 @@ router.patch("/:id", (req, res) => {
     if (updates.length === 0) return res.status(400).json({ error: "No valid fields to update." });
 
     values.push(req.params.id);
-    db.prepare(`UPDATE campaigns SET ${updates.join(", ")}, updated_at = datetime('now') WHERE id = ?`).run(...values);
-    logActivity("campaign_edited", `Campaign #${req.params.id} ("${campaign.title}") edited by ${req.admin.email}`);
+    await db.prepare(`UPDATE campaigns SET ${updates.join(", ")}, updated_at = datetime('now') WHERE id = ?`).run(...values);
+    await logActivity("campaign_edited", `Campaign #${req.params.id} ("${campaign.title}") edited by ${req.admin.email}`);
     res.json({ success: true });
 });
 
-router.post("/:id/approve", (req, res) => {
-    const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+router.post("/:id/approve", async (req, res) => {
+    const campaign = await db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
     if (!campaign) return res.status(404).json({ error: "Campaign not found." });
-    db.prepare("UPDATE campaigns SET status = 'active', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
-    logActivity("campaign_approved", `"${campaign.title}" approved by ${req.admin.email}`);
+    await db.prepare("UPDATE campaigns SET status = 'active', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
+    await logActivity("campaign_approved", `"${campaign.title}" approved by ${req.admin.email}`);
     res.json({ success: true });
 });
 
-router.post("/:id/reject", (req, res) => {
-    const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+router.post("/:id/reject", async (req, res) => {
+    const campaign = await db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
     if (!campaign) return res.status(404).json({ error: "Campaign not found." });
-    db.prepare("UPDATE campaigns SET status = 'rejected', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
-    logActivity("campaign_rejected", `"${campaign.title}" rejected by ${req.admin.email}`);
+    await db.prepare("UPDATE campaigns SET status = 'rejected', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
+    await logActivity("campaign_rejected", `"${campaign.title}" rejected by ${req.admin.email}`);
     res.json({ success: true });
 });
 
-router.post("/:id/archive", (req, res) => {
-    const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+router.post("/:id/archive", async (req, res) => {
+    const campaign = await db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
     if (!campaign) return res.status(404).json({ error: "Campaign not found." });
-    db.prepare("UPDATE campaigns SET status = 'archived', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
-    logActivity("campaign_archived", `"${campaign.title}" archived by ${req.admin.email}`);
+    await db.prepare("UPDATE campaigns SET status = 'archived', updated_at = datetime('now') WHERE id = ?").run(req.params.id);
+    await logActivity("campaign_archived", `"${campaign.title}" archived by ${req.admin.email}`);
     res.json({ success: true });
 });
 
-router.delete("/:id", (req, res) => {
-    const campaign = db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
+router.delete("/:id", async (req, res) => {
+    const campaign = await db.prepare("SELECT * FROM campaigns WHERE id = ?").get(req.params.id);
     if (!campaign) return res.status(404).json({ error: "Campaign not found." });
-    db.prepare("DELETE FROM campaigns WHERE id = ?").run(req.params.id);
-    logActivity("campaign_deleted", `"${campaign.title}" deleted by ${req.admin.email}`);
+    await db.prepare("DELETE FROM campaigns WHERE id = ?").run(req.params.id);
+    await logActivity("campaign_deleted", `"${campaign.title}" deleted by ${req.admin.email}`);
     res.json({ success: true });
 });
 

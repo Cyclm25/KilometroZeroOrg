@@ -4,7 +4,7 @@ const db = require("../db/database");
 const router = express.Router();
 
 // GET /api/admin/donations?status=&campaignId=&dateFrom=&dateTo=&sort=&dir=&page=&pageSize=
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
     const { status = "", campaignId = "", dateFrom = "", dateTo = "" } = req.query;
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
     const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize || "15", 10)));
@@ -28,8 +28,8 @@ router.get("/", (req, res) => {
         params.dateTo = dateTo;
     }
 
-    const total = db.prepare(`SELECT COUNT(*) c FROM donations d ${where}`).get(params).c;
-    const rows = db.prepare(`
+    const total = (await db.prepare(`SELECT COUNT(*) c FROM donations d ${where}`).get(params)).c;
+    const rows = await db.prepare(`
         SELECT d.*, c.title AS campaign_title
         FROM donations d
         LEFT JOIN campaigns c ON c.id = d.campaign_id
@@ -42,7 +42,7 @@ router.get("/", (req, res) => {
 });
 
 // CSV export respects the same filters
-router.get("/export.csv", (req, res) => {
+router.get("/export.csv", async (req, res) => {
     const { status = "", campaignId = "", dateFrom = "", dateTo = "" } = req.query;
     let where = "WHERE 1=1";
     const params = {};
@@ -51,7 +51,7 @@ router.get("/export.csv", (req, res) => {
     if (dateFrom) { where += " AND date(d.created_at) >= date(@dateFrom)"; params.dateFrom = dateFrom; }
     if (dateTo) { where += " AND date(d.created_at) <= date(@dateTo)"; params.dateTo = dateTo; }
 
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
         SELECT d.id, d.donor_name, d.is_public, c.title AS campaign_title, d.amount,
                d.payment_status, d.payment_method, d.created_at
         FROM donations d

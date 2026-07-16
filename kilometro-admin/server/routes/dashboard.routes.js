@@ -3,41 +3,42 @@ const express = require("express");
 const db = require("../db/database");
 const router = express.Router();
 
-router.get("/overview", (req, res) => {
-    const totalCampaigns = db.prepare("SELECT COUNT(*) c FROM campaigns").get().c;
-    const activeCampaigns = db.prepare("SELECT COUNT(*) c FROM campaigns WHERE status = 'active'").get().c;
-    const completedCampaigns = db.prepare("SELECT COUNT(*) c FROM campaigns WHERE status = 'completed'").get().c;
-    const pendingCampaigns = db.prepare("SELECT COUNT(*) c FROM campaigns WHERE status = 'pending'").get().c;
-    const totalUsers = db.prepare("SELECT COUNT(*) c FROM users WHERE role != 'admin'").get().c;
-    const totalDonors = db.prepare("SELECT COUNT(*) c FROM users WHERE is_donor = 1").get().c;
-    const verifiedDonors = db.prepare("SELECT COUNT(*) c FROM users WHERE email_verified = 1 AND role != 'admin'").get().c;
-    const approvedKyc = db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'approved' AND role != 'admin'").get().c;
-    const pendingKyc = db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'pending' AND role != 'admin'").get().c;
-    const rejectedKyc = db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'rejected' AND role != 'admin'").get().c;
+router.get("/overview", async (req, res) => {
+    const totalCampaigns = (await db.prepare("SELECT COUNT(*) c FROM campaigns").get()).c;
+    const activeCampaigns = (await db.prepare("SELECT COUNT(*) c FROM campaigns WHERE status = 'active'").get()).c;
+    const completedCampaigns = (await db.prepare("SELECT COUNT(*) c FROM campaigns WHERE status = 'completed'").get()).c;
+    const pendingCampaigns = (await db.prepare("SELECT COUNT(*) c FROM campaigns WHERE status = 'pending'").get()).c;
+    const totalUsers = (await db.prepare("SELECT COUNT(*) c FROM users WHERE role != 'admin'").get()).c;
+    const totalDonors = (await db.prepare("SELECT COUNT(*) c FROM users WHERE is_donor = 1").get()).c;
+    const verifiedDonors = (await db.prepare("SELECT COUNT(*) c FROM users WHERE email_verified = 1 AND role != 'admin'").get()).c;
+    const approvedKyc = (await db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'approved' AND role != 'admin'").get()).c;
+    const pendingKyc = (await db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'pending' AND role != 'admin'").get()).c;
+    const rejectedKyc = (await db.prepare("SELECT COUNT(*) c FROM users WHERE kyc_status = 'rejected' AND role != 'admin'").get()).c;
 
-    const totalDonated = db.prepare(
+    const totalDonated = (await db.prepare(
         "SELECT COALESCE(SUM(amount),0) s FROM donations WHERE payment_status = 'successful'"
-    ).get().s;
-    const successfulPayments = db.prepare("SELECT COUNT(*) c FROM donations WHERE payment_status = 'successful'").get().c;
-    const pendingPayments = db.prepare("SELECT COUNT(*) c FROM donations WHERE payment_status = 'pending'").get().c;
-    const failedPayments = db.prepare("SELECT COUNT(*) c FROM donations WHERE payment_status = 'failed'").get().c;
-    const withdrawnFunds = db.prepare(
+    ).get()).s;
+    const successfulPayments = (await db.prepare("SELECT COUNT(*) c FROM donations WHERE payment_status = 'successful'").get()).c;
+    const pendingPayments = (await db.prepare("SELECT COUNT(*) c FROM donations WHERE payment_status = 'pending'").get()).c;
+    const failedPayments = (await db.prepare("SELECT COUNT(*) c FROM donations WHERE payment_status = 'failed'").get()).c;
+    const withdrawnFunds = (await db.prepare(
         "SELECT COALESCE(SUM(amount),0) s FROM withdrawals WHERE status = 'completed'"
-    ).get().s;
+    ).get()).s;
 
-    const recentActivity = db.prepare(
+    const recentActivity = await db.prepare(
         "SELECT action, details, created_at FROM activity_log ORDER BY created_at DESC LIMIT 10"
     ).all();
 
-    // Last 6 months donation totals for the trend chart (mock-gateway aware)
-    const monthlyTrend = db.prepare(`
+    // Last 6 months donation totals for the trend chart
+    const monthlyTrendRows = await db.prepare(`
         SELECT strftime('%Y-%m', created_at) AS month, COALESCE(SUM(amount),0) AS total
         FROM donations
         WHERE payment_status = 'successful'
         GROUP BY month
         ORDER BY month DESC
         LIMIT 6
-    `).all().reverse();
+    `).all();
+    const monthlyTrend = monthlyTrendRows.reverse();
 
     res.json({
         campaigns: {
@@ -55,14 +56,12 @@ router.get("/overview", (req, res) => {
             rejectedKyc,
         },
         payments: {
-            // NOTE: real payment gateway is still under development.
-            // These figures come from mock/demo donation records until then.
             totalDonated,
             successfulPayments,
             pendingPayments,
             failedPayments,
             withdrawnFunds,
-            isMockData: true,
+            isMockData: false, // real PayMongo payments now, no longer mock data
         },
         recentActivity,
         monthlyTrend,

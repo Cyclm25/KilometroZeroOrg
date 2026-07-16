@@ -99,7 +99,7 @@ function guardAdminPage(req, res, next) {
     }
 }
 
-function verifyDonorToken(req, res, next) {
+async function verifyDonorToken(req, res, next) {
     const token = req.cookies ? req.cookies[DONOR_COOKIE_NAME] : null;
     if (!token) {
         return res.status(401).json({ error: "Not authenticated." });
@@ -107,7 +107,7 @@ function verifyDonorToken(req, res, next) {
 
     try {
         const payload = jwt.verify(token, JWT_SECRET);
-        const user = db.prepare(
+        const user = await db.prepare(
             `SELECT id, name, email, role, status, is_donor, email_verified, email_verified_at,
                     kyc_status, kyc_submitted_at, kyc_reviewed_at, kyc_rejection_reason, donor_session_version
              FROM users WHERE id = ? AND role != 'admin'`

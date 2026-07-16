@@ -40,7 +40,7 @@ function parseStoredSubmission(row) {
     };
 }
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
     const { status = "", search = "" } = req.query;
     const page = Math.max(1, parseInt(req.query.page || "1", 10));
     const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize || "10", 10)));
@@ -56,14 +56,14 @@ router.get("/", (req, res) => {
         params.search = `%${search}%`;
     }
 
-    const total = db.prepare(`
+    const total = (await db.prepare(`
         SELECT COUNT(*) c
         FROM kyc_submissions k
         JOIN users u ON u.id = k.user_id
         ${where}
-    `).get(params).c;
+    `).get(params)).c;
 
-    const rows = db.prepare(`
+    const rows = await db.prepare(`
         SELECT k.id, k.user_id, u.name, u.email, u.email_verified, u.kyc_status,
                k.status, k.submitted_at, k.reviewed_at, k.reviewed_by, k.rejection_reason
         FROM kyc_submissions k
@@ -76,8 +76,8 @@ router.get("/", (req, res) => {
     res.json({ data: rows, total, page, pageSize });
 });
 
-router.get("/:id", (req, res) => {
-    const row = db.prepare(`
+router.get("/:id", async (req, res) => {
+    const row = await db.prepare(`
         SELECT k.*, u.name, u.email
         FROM kyc_submissions k
         JOIN users u ON u.id = k.user_id
@@ -91,14 +91,14 @@ router.get("/:id", (req, res) => {
     res.json({ submission: parseStoredSubmission(row) });
 });
 
-router.post("/:id/approve", (req, res) => {
-    const submission = db.prepare("SELECT * FROM kyc_submissions WHERE id = ?").get(req.params.id);
+router.post("/:id/approve", async (req, res) => {
+    const submission = await db.prepare("SELECT * FROM kyc_submissions WHERE id = ?").get(req.params.id);
     if (!submission) {
         return res.status(404).json({ error: "KYC submission not found." });
     }
 
-    db.transaction(() => {
-        db.prepare(`
+    await db.transaction(async (tx) => {
+        await tx.prepare(`
             UPDATE kyc_submissions
             SET status = 'approved',
                 rejection_reason = NULL,
@@ -107,7 +107,7 @@ router.post("/:id/approve", (req, res) => {
             WHERE id = ?
         `).run(req.admin.id, submission.id);
 
-        db.prepare(`
+        await tx.prepare(`
             UPDATE users
             SET kyc_status = 'approved',
                 kyc_reviewed_at = datetime('now'),
@@ -116,10 +116,10 @@ router.post("/:id/approve", (req, res) => {
             WHERE id = ?
         `).run(submission.user_id);
 
-        db.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('system', ?, 0)").run(
+        await tx.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('system', ?, 0)").run(
             `KYC approved for user ID ${submission.user_id}`
         );
-        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+        await tx.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
             "kyc_approved",
             `KYC approved by ${req.admin.email} for user ID ${submission.user_id}`
         );
@@ -128,9 +128,9 @@ router.post("/:id/approve", (req, res) => {
     res.json({ success: true });
 });
 
-router.post("/:id/reject", (req, res) => {
+router.post("/:id/reject", async (req, res) => {
     const reason = String(req.body.reason || "").trim();
-    const submission = db.prepare("SELECT * FROM kyc_submissions WHERE id = ?").get(req.params.id);
+    const submission = await db.prepare("SELECT * FROM kyc_submissions WHERE id = ?").get(req.params.id);
     if (!submission) {
         return res.status(404).json({ error: "KYC submission not found." });
     }
@@ -138,8 +138,8 @@ router.post("/:id/reject", (req, res) => {
         return res.status(400).json({ error: "A rejection reason is required." });
     }
 
-    db.transaction(() => {
-        db.prepare(`
+    await db.transaction(async (tx) => {
+        await tx.prepare(`
             UPDATE kyc_submissions
             SET status = 'rejected',
                 rejection_reason = ?,
@@ -148,7 +148,7 @@ router.post("/:id/reject", (req, res) => {
             WHERE id = ?
         `).run(reason, req.admin.id, submission.id);
 
-        db.prepare(`
+        await tx.prepare(`
             UPDATE users
             SET kyc_status = 'rejected',
                 kyc_reviewed_at = datetime('now'),
@@ -157,10 +157,10 @@ router.post("/:id/reject", (req, res) => {
             WHERE id = ?
         `).run(reason, submission.user_id);
 
-        db.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('system', ?, 0)").run(
+        await tx.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('system', ?, 0)").run(
             `KYC rejected for user ID ${submission.user_id}`
         );
-        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+        await tx.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
             "kyc_rejected",
             `KYC rejected by ${req.admin.email} for user ID ${submission.user_id}`
         );

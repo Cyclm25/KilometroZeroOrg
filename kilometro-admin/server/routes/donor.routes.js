@@ -77,7 +77,7 @@ router.post("/register", authLimiter, async (req, res) => {
         return res.status(400).json({ error: "Use a password with at least 10 characters." });
     }
 
-    const existing = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    const existing = await db.prepare("SELECT * FROM users WHERE email = ?").get(email);
     if (existing && existing.role === "admin") {
         return res.status(403).json({ error: "This email is reserved for an administrator account." });
     }
@@ -90,7 +90,7 @@ router.post("/register", authLimiter, async (req, res) => {
     const codeHash = hashValue(verificationCode);
     const codeExpiresAt = nowPlusMinutes(15);
 
-    db.prepare(`
+    await db.prepare(`
         INSERT INTO users (
             name, email, password_hash, role, status, is_donor,
             email_verified, email_verified_at, email_verification_code_hash,
@@ -123,7 +123,7 @@ router.post("/register", authLimiter, async (req, res) => {
         queueVerificationEmail(email, verificationCode);
     }
 
-    const donor = db.prepare(
+    const donor = await db.prepare(
         `SELECT id, name, email, status, email_verified, email_verified_at, kyc_status,
                 kyc_submitted_at, kyc_reviewed_at, kyc_rejection_reason, donor_session_version
          FROM users WHERE email = ?`
@@ -139,7 +139,7 @@ router.post("/register", authLimiter, async (req, res) => {
         sessionVersion: donor.donor_session_version,
     });
 
-    db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+    await db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
         "donor_registered",
         `Donor account created for ${email}`
     );
@@ -152,7 +152,7 @@ router.post("/register", authLimiter, async (req, res) => {
     });
 });
 
-router.post("/verify-email", authLimiter, (req, res) => {
+router.post("/verify-email", authLimiter, async (req, res) => {
     const email = normalizeEmail(req.body.email);
     const code = String(req.body.code || "").trim();
 
@@ -160,7 +160,7 @@ router.post("/verify-email", authLimiter, (req, res) => {
         return res.status(400).json({ error: "Email and verification code are required." });
     }
 
-    const donor = db.prepare("SELECT * FROM users WHERE email = ? AND role != 'admin'").get(email);
+    const donor = await db.prepare("SELECT * FROM users WHERE email = ? AND role != 'admin'").get(email);
     if (!donor) {
         return res.status(404).json({ error: "No donor account found for that email." });
     }
@@ -180,7 +180,7 @@ router.post("/verify-email", authLimiter, (req, res) => {
         return res.status(400).json({ error: "Invalid verification code." });
     }
 
-    db.prepare(`
+    await db.prepare(`
         UPDATE users
         SET email_verified = 1,
             email_verified_at = datetime('now'),
@@ -190,7 +190,7 @@ router.post("/verify-email", authLimiter, (req, res) => {
         WHERE id = ?
     `).run(donor.id);
 
-    const verifiedDonor = db.prepare(
+    const verifiedDonor = await db.prepare(
         `SELECT id, name, email, status, email_verified, email_verified_at, kyc_status,
                 kyc_submitted_at, kyc_reviewed_at, kyc_rejection_reason, donor_session_version
          FROM users WHERE id = ?`
@@ -206,7 +206,7 @@ router.post("/verify-email", authLimiter, (req, res) => {
         sessionVersion: verifiedDonor.donor_session_version,
     });
 
-    db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+    await db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
         "donor_email_verified",
         `Donor email verified for ${donor.email}`
     );
@@ -222,7 +222,7 @@ router.post("/login", authLimiter, async (req, res) => {
         return res.status(400).json({ error: "Email and password are required." });
     }
 
-    const donor = db.prepare("SELECT * FROM users WHERE email = ? AND role != 'admin'").get(email);
+    const donor = await db.prepare("SELECT * FROM users WHERE email = ? AND role != 'admin'").get(email);
     const hashToCheck = donor ? donor.password_hash : "$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinva";
     const passwordMatches = await bcrypt.compare(password, hashToCheck);
 
@@ -246,7 +246,7 @@ router.post("/login", authLimiter, async (req, res) => {
         sessionVersion: donor.donor_session_version,
     });
 
-    db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+    await db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
         "donor_login",
         `Donor ${donor.email} logged in`
     );
@@ -254,22 +254,22 @@ router.post("/login", authLimiter, async (req, res) => {
     res.json({ success: true, donor: publicDonor(donor) });
 });
 
-router.post("/logout", verifyDonorToken, (req, res) => {
-    db.prepare("UPDATE users SET donor_session_version = donor_session_version + 1 WHERE id = ?").run(req.donor.id);
+router.post("/logout", verifyDonorToken, async (req, res) => {
+    await db.prepare("UPDATE users SET donor_session_version = donor_session_version + 1 WHERE id = ?").run(req.donor.id);
     clearDonorToken(res);
-    db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+    await db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
         "donor_logout",
         `Donor ${req.donor.email} logged out`
     );
     res.json({ success: true });
 });
 
-router.get("/me", verifyDonorToken, (req, res) => {
-    const kyc = db.prepare("SELECT * FROM kyc_submissions WHERE user_id = ?").get(req.donor.id);
+router.get("/me", verifyDonorToken, async (req, res) => {
+    const kyc = await db.prepare("SELECT * FROM kyc_submissions WHERE user_id = ?").get(req.donor.id);
     res.json({ donor: publicDonor(req.donor), kyc: kyc ? { id: kyc.id, status: kyc.status, submitted_at: kyc.submitted_at, reviewed_at: kyc.reviewed_at, rejection_reason: kyc.rejection_reason } : null });
 });
 
-router.post("/kyc", verifyDonorToken, requireVerifiedEmail, (req, res) => {
+router.post("/kyc", verifyDonorToken, requireVerifiedEmail, async (req, res) => {
     const idType = String(req.body.idType || "").trim();
     const idNumber = String(req.body.idNumber || "").trim();
     const document = req.body.document;
@@ -316,8 +316,8 @@ router.post("/kyc", verifyDonorToken, requireVerifiedEmail, (req, res) => {
     };
 
     const now = new Date().toISOString();
-    db.transaction(() => {
-        db.prepare(`
+    await db.transaction(async (tx) => {
+        await tx.prepare(`
             INSERT INTO kyc_submissions (
                 user_id, id_type, id_document_name, id_document_mime, id_document_ciphertext,
                 selfie_name, selfie_mime, selfie_ciphertext, status, rejection_reason, submitted_at, reviewed_at, reviewed_by
@@ -347,7 +347,7 @@ router.post("/kyc", verifyDonorToken, requireVerifiedEmail, (req, res) => {
             now
         );
 
-        db.prepare(`
+        await tx.prepare(`
             UPDATE users
             SET kyc_status = 'pending',
                 kyc_submitted_at = datetime('now'),
@@ -358,16 +358,16 @@ router.post("/kyc", verifyDonorToken, requireVerifiedEmail, (req, res) => {
             WHERE id = ?
         `).run(req.donor.id);
 
-        db.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('system', ?, 0)").run(
+        await tx.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('system', ?, 0)").run(
             `New KYC submission received from ${req.donor.email}`
         );
-        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+        await tx.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
             "donor_kyc_submitted",
             `KYC submitted for ${req.donor.email}`
         );
     })();
 
-    const updatedDonor = db.prepare("SELECT * FROM users WHERE id = ?").get(req.donor.id);
+    const updatedDonor = await db.prepare("SELECT * FROM users WHERE id = ?").get(req.donor.id);
     issueDonorToken(res, {
         id: updatedDonor.id,
         email: updatedDonor.email,
@@ -391,24 +391,23 @@ router.post("/donations", verifyDonorToken, requireKycApproved, async (req, res)
     }
 
     if (campaignId) {
-        const campaign = db.prepare("SELECT id FROM campaigns WHERE id = ?").get(campaignId);
-        if (!campaign) {
+        const campaignExists = await db.prepare("SELECT id FROM campaigns WHERE id = ?").get(campaignId);
+        if (!campaignExists) {
             return res.status(404).json({ error: "Campaign not found." });
         }
     }
 
-    const campaign = campaignId ? db.prepare("SELECT title FROM campaigns WHERE id = ?").get(campaignId) : null;
+    const campaign = campaignId ? await db.prepare("SELECT title FROM campaigns WHERE id = ?").get(campaignId) : null;
 
     // Donation starts out 'pending' - it only becomes 'successful' once the
     // PayMongo webhook confirms real payment (see paymongo_webhook.routes.js).
-    const insertDonation = db.prepare(`
-        INSERT INTO donations (campaign_id, donor_user_id, donor_name, donor_email, is_public, amount, payment_status, payment_method)
-        VALUES (?, ?, ?, ?, 1, ?, 'pending', 'PayMongo')
-    `);
+    const donation = await db.transaction(async (tx) => {
+        const inserted = await tx.prepare(`
+            INSERT INTO donations (campaign_id, donor_user_id, donor_name, donor_email, is_public, amount, payment_status, payment_method)
+            VALUES (?, ?, ?, ?, 1, ?, 'pending', 'PayMongo')
+        `).run(campaignId, req.donor.id, req.donor.name, req.donor.email, amount);
 
-    const donation = db.transaction(() => {
-        const inserted = insertDonation.run(campaignId, req.donor.id, req.donor.name, req.donor.email, amount);
-        db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+        await tx.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
             "donation_checkout_started",
             `Donor ${req.donor.email} started checkout for ₱${amount.toLocaleString("en-PH", { maximumFractionDigits: 0 })}${note ? ` (${note})` : ""}`
         );
@@ -428,19 +427,19 @@ router.post("/donations", verifyDonorToken, requireKycApproved, async (req, res)
         });
     } catch (err) {
         console.error(`[donations] failed to create PayMongo checkout session for donation #${donationId}:`, err);
-        db.prepare("UPDATE donations SET payment_status = 'failed' WHERE id = ?").run(donationId);
+        await db.prepare("UPDATE donations SET payment_status = 'failed' WHERE id = ?").run(donationId);
         return res.status(502).json({ error: "Could not start the payment process. Please try again." });
     }
 
-    db.prepare("UPDATE donations SET paymongo_checkout_session_id = ? WHERE id = ?").run(session.id, donationId);
+    await db.prepare("UPDATE donations SET paymongo_checkout_session_id = ? WHERE id = ?").run(session.id, donationId);
 
     res.json({ success: true, donationId, checkoutUrl: session.checkoutUrl });
 });
 
 // Lets the frontend poll for payment confirmation after the donor is
 // redirected back from PayMongo's hosted checkout page.
-router.get("/donations/:id/status", verifyDonorToken, (req, res) => {
-    const donation = db.prepare(
+router.get("/donations/:id/status", verifyDonorToken, async (req, res) => {
+    const donation = await db.prepare(
         "SELECT id, donor_user_id, amount, payment_status, receipt_email_sent FROM donations WHERE id = ?"
     ).get(req.params.id);
 

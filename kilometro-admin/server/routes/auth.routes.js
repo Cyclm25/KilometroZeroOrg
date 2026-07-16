@@ -20,8 +20,8 @@ const loginLimiter = rateLimit({
     message: { error: "Too many login attempts. Please try again in 15 minutes." },
 });
 
-function logAttempt(email, success, ip) {
-    db.prepare(
+async function logAttempt(email, success, ip) {
+    await db.prepare(
         "INSERT INTO login_attempts (email, success, ip) VALUES (?, ?, ?)"
     ).run(email, success ? 1 : 0, ip);
 }
@@ -34,7 +34,7 @@ router.post("/login", loginLimiter, async (req, res) => {
         return res.status(400).json({ error: "Email and password are required." });
     }
 
-    const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    const user = await db.prepare("SELECT * FROM users WHERE email = ?").get(email);
 
     // Always compare against a hash (even a dummy one) to avoid leaking via timing
     // whether the email exists, and always return the same generic error.
@@ -43,7 +43,7 @@ router.post("/login", loginLimiter, async (req, res) => {
 
     const isValidAdmin = !!user && passwordMatches && user.role === "admin" && user.status === "active";
 
-    logAttempt(email, isValidAdmin, req.ip);
+    await logAttempt(email, isValidAdmin, req.ip);
 
     if (!isValidAdmin) {
         return res.status(401).json({ error: "Invalid credentials or insufficient privileges." });
@@ -51,7 +51,7 @@ router.post("/login", loginLimiter, async (req, res) => {
 
     issueToken(res, { id: user.id, email: user.email, role: user.role, name: user.name });
 
-    db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+    await db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
         "admin_login",
         `Administrator ${user.email} logged in`
     );
@@ -59,9 +59,9 @@ router.post("/login", loginLimiter, async (req, res) => {
     res.json({ success: true, admin: { id: user.id, name: user.name, email: user.email, role: user.role } });
 });
 
-router.post("/logout", verifyAdminToken, (req, res) => {
+router.post("/logout", verifyAdminToken, async (req, res) => {
     clearToken(res);
-    db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+    await db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
         "admin_logout",
         `Administrator ${req.admin.email} logged out`
     );
@@ -75,3 +75,4 @@ router.get("/me", verifyAdminToken, (req, res) => {
 });
 
 module.exports = router;
+

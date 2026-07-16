@@ -1,17 +1,115 @@
 // server/db/database.js
-// Central SQLite connection + schema setup.
-// Using better-sqlite3: synchronous, fast, file-based - no separate DB server needed.
+//
+// Was: local SQLite file via better-sqlite3 (synchronous, wiped on every
+// Render redeploy since Render's free tier has an ephemeral filesystem).
+// Now: Turso (hosted libSQL, SQLite-compatible), which survives redeploys,
+// restarts, and free-tier spin-downs because it lives outside Render entirely.
+//
+// IMPORTANT BEHAVIOR CHANGE: every db.prepare(...).get()/.all()/.run() call
+// is now ASYNC. Every call site across the app must use `await`, and every
+// route handler / middleware that touches the database must be `async`.
+//
+// Required env vars:
+//   TURSO_DATABASE_URL - from `turso db show <name> --url` (starts with libsql://)
+//   TURSO_AUTH_TOKEN   - from `turso db tokens create <name>`
 
-const path = require("path");
-const Database = require("better-sqlite3");
+const { createClient } = require("@libsql/client");
 
-const DB_PATH = path.join(__dirname, "kilometro.db");
-const db = new Database(DB_PATH);
+const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
+// better-sqlite3 lets you call .get(a, b, c) (positional) OR .get({named: 1})
+// (named params). libSQL's execute() takes a single `args` value that is
+// either an array (positional) or a plain object (named) - so we just need
+// to figure out which shape the caller used and pass it straight through.
+function normalizeArgs(rawArgs) {
+    if (rawArgs.length === 1 && rawArgs[0] !== null && typeof rawArgs[0] === "object" && !Array.isArray(rawArgs[0])) {
+        return rawArgs[0];
+    }
+    return rawArgs;
+}
 
-db.exec(`
+// better-sqlite3's .run() returns { lastInsertRowid, changes }. libSQL's
+// execute() returns { lastInsertRowid: BigInt, rowsAffected }. Convert so
+// existing call sites (which expect plain numbers) keep working unchanged.
+function wrapRunResult(result) {
+    return {
+        lastInsertRowid: result.lastInsertRowid !== undefined && result.lastInsertRowid !== null
+            ? Number(result.lastInsertRowid)
+            : undefined,
+        changes: result.rowsAffected,
+    };
+}
+
+function makeStatement(sql, executor) {
+    return {
+        async get(...args) {
+            const result = await executor({ sql, args: normalizeArgs(args) });
+            return result.rows[0];
+        },
+        async all(...args) {
+            const result = await executor({ sql, args: normalizeArgs(args) });
+            return result.rows;
+        },
+        async run(...args) {
+            const result = await executor({ sql, args: normalizeArgs(args) });
+            return wrapRunResult(result);
+        },
+    };
+}
+
+function prepare(sql) {
+    return makeStatement(sql, (stmt) => client.execute(stmt));
+}
+
+// Replaces better-sqlite3's synchronous `db.transaction(fn)()` pattern.
+// Usage is now: `await db.transaction(async (tx) => { await tx.prepare(...).run(...); })();`
+// - fn receives a transaction-scoped db-like object (with its own .prepare()).
+// - Use `tx.prepare(...)` (NOT the outer `db.prepare(...)`) for every call
+//   inside the callback, so those statements run inside the same transaction.
+function transaction(fn) {
+    return async (...fnArgs) => {
+        const tx = await client.transaction("write");
+        const txDb = { prepare: (sql) => makeStatement(sql, (stmt) => tx.execute(stmt)) };
+        try {
+            const result = await fn(txDb, ...fnArgs);
+            await tx.commit();
+            return result;
+        } catch (err) {
+            await tx.rollback();
+            throw err;
+        }
+    };
+}
+
+async function ensureColumn(tableName, columnSql) {
+    const columnName = columnSql.split(/\s+/)[0];
+    // pragma_table_info is a regular table-valued function (unlike the PRAGMA
+    // statement form), so it works fine over libSQL's query protocol.
+    // tableName is always a hardcoded literal from the ensureColumn() calls
+    // below, never user input, so string interpolation here is safe.
+    const result = await client.execute(`SELECT name FROM pragma_table_info('${tableName}')`);
+    const exists = result.rows.some((row) => row.name === columnName);
+    if (!exists) {
+        await client.execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnSql}`);
+    }
+}
+
+let initPromise = null;
+
+// Creates all tables/columns if they don't already exist. Safe to call
+// every time the app starts - CREATE TABLE IF NOT EXISTS and ensureColumn()
+// are both idempotent. Must be awaited once before the app starts handling
+// requests (see index.js and seedAdmin.js).
+function initDb() {
+    if (initPromise) return initPromise;
+
+    initPromise = (async () => {
+        await client.execute("PRAGMA foreign_keys = ON");
+
+        await client.executeMultiple(`
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -23,7 +121,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Enforce at most one admin account at the database level.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_single_admin
     ON users(role) WHERE role = 'admin';
 
@@ -100,30 +197,26 @@ CREATE TABLE IF NOT EXISTS kyc_submissions (
     reviewed_at TEXT,
     reviewed_by INTEGER REFERENCES users(id) ON DELETE SET NULL
 );
-`);
+        `);
 
-function ensureColumn(tableName, columnSql) {
-    const columnName = columnSql.split(/\s+/)[0];
-    const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
-    if (!columns.some((column) => column.name === columnName)) {
-        db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnSql}`).run();
-    }
+        await ensureColumn("users", "email_verified INTEGER NOT NULL DEFAULT 0");
+        await ensureColumn("users", "email_verified_at TEXT");
+        await ensureColumn("users", "email_verification_code_hash TEXT");
+        await ensureColumn("users", "email_verification_expires_at TEXT");
+        await ensureColumn("users", "kyc_status TEXT NOT NULL DEFAULT 'not_started' CHECK(kyc_status IN ('not_started','pending','approved','rejected'))");
+        await ensureColumn("users", "kyc_submitted_at TEXT");
+        await ensureColumn("users", "kyc_reviewed_at TEXT");
+        await ensureColumn("users", "kyc_rejection_reason TEXT");
+        await ensureColumn("users", "donor_session_version INTEGER NOT NULL DEFAULT 0");
+        await ensureColumn("donations", "donor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL");
+        await ensureColumn("donations", "receipt_email_sent INTEGER NOT NULL DEFAULT 0");
+        await ensureColumn("donations", "receipt_email_sent_at TEXT");
+        await ensureColumn("donations", "receipt_email_error TEXT");
+        await ensureColumn("donations", "paymongo_checkout_session_id TEXT");
+        await ensureColumn("donations", "paymongo_payment_id TEXT");
+    })();
+
+    return initPromise;
 }
 
-ensureColumn("users", "email_verified INTEGER NOT NULL DEFAULT 0");
-ensureColumn("users", "email_verified_at TEXT");
-ensureColumn("users", "email_verification_code_hash TEXT");
-ensureColumn("users", "email_verification_expires_at TEXT");
-ensureColumn("users", "kyc_status TEXT NOT NULL DEFAULT 'not_started' CHECK(kyc_status IN ('not_started','pending','approved','rejected'))");
-ensureColumn("users", "kyc_submitted_at TEXT");
-ensureColumn("users", "kyc_reviewed_at TEXT");
-ensureColumn("users", "kyc_rejection_reason TEXT");
-ensureColumn("users", "donor_session_version INTEGER NOT NULL DEFAULT 0");
-ensureColumn("donations", "donor_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL");
-ensureColumn("donations", "receipt_email_sent INTEGER NOT NULL DEFAULT 0");
-ensureColumn("donations", "receipt_email_sent_at TEXT");
-ensureColumn("donations", "receipt_email_error TEXT");
-ensureColumn("donations", "paymongo_checkout_session_id TEXT");
-ensureColumn("donations", "paymongo_payment_id TEXT");
-
-module.exports = db;
+module.exports = { prepare, transaction, initDb };

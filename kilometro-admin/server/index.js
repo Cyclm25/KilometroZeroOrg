@@ -12,6 +12,7 @@ const express = require("express");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const seedAdmin = require("./db/seedAdmin");
+const db = require("./db/database");
 
 const { verifyAdminToken, requireAdminRole, guardAdminPage } = require("./middleware/auth");
 const authRoutes = require("./routes/auth.routes");
@@ -107,13 +108,14 @@ app.get("/admin/access-denied", (req, res) => {
 });
 
 // ---------------------------------------------------------------------
-// STARTUP - seed/verify the admin account from env vars first, then
-// start accepting requests. This makes the admin login work automatically
-// on Render's free tier, where Shell/one-off jobs aren't available.
+// STARTUP - initialize the Turso database (create tables/columns if this
+// is a fresh database), then seed/verify the admin account from env vars,
+// then start accepting requests.
 // ---------------------------------------------------------------------
-seedAdmin()
+db.initDb()
+    .then(() => seedAdmin())
     .catch((err) => {
-        console.error("[seedAdmin] error during startup seed:", err);
+        console.error("[startup] error during database init / admin seed:", err);
     })
     .finally(() => {
         app.listen(PORT, () => {

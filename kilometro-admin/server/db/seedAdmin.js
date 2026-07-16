@@ -17,6 +17,8 @@ const bcrypt = require("bcryptjs");
 const db = require("./database");
 
 async function seedAdmin() {
+    await db.initDb();
+
     const name = process.env.ADMIN_NAME || "Site Administrator";
     const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
     const password = process.env.ADMIN_PASSWORD || "";
@@ -30,16 +32,16 @@ async function seedAdmin() {
         return;
     }
 
-    const existingAdmin = db.prepare("SELECT * FROM users WHERE role = 'admin'").get();
+    const existingAdmin = await db.prepare("SELECT * FROM users WHERE role = 'admin'").get();
     const passwordHash = await bcrypt.hash(password, 12);
 
     if (existingAdmin) {
-        db.prepare(
+        await db.prepare(
             `UPDATE users SET name = ?, email = ?, password_hash = ?, status = 'active' WHERE id = ?`
         ).run(name, email, passwordHash, existingAdmin.id);
         console.log(`[seedAdmin] Existing admin account updated: ${email}`);
     } else {
-        db.prepare(
+        await db.prepare(
             `INSERT INTO users (name, email, password_hash, role, status)
              VALUES (?, ?, ?, 'admin', 'active')`
         ).run(name, email, passwordHash);

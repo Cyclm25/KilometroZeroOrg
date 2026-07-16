@@ -48,7 +48,7 @@ router.post("/", async (req, res) => {
             return;
         }
 
-        const donation = db.prepare(
+        const donation = await db.prepare(
             "SELECT * FROM donations WHERE paymongo_checkout_session_id = ?"
         ).get(checkoutSessionId);
 
@@ -65,8 +65,8 @@ router.post("/", async (req, res) => {
         const payments = checkoutSession?.attributes?.payments || [];
         const paymentId = payments[0]?.id || null;
 
-        db.transaction(() => {
-            db.prepare(`
+        await db.transaction(async (tx) => {
+            await tx.prepare(`
                 UPDATE donations
                 SET payment_status = 'successful',
                     paymongo_payment_id = ?
@@ -74,15 +74,15 @@ router.post("/", async (req, res) => {
             `).run(paymentId, donation.id);
 
             if (donation.campaign_id) {
-                db.prepare(
+                await tx.prepare(
                     "UPDATE campaigns SET raised_amount = raised_amount + ?, updated_at = datetime('now') WHERE id = ?"
                 ).run(donation.amount, donation.campaign_id);
             }
 
-            db.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('new_donation', ?, 0)").run(
+            await tx.prepare("INSERT INTO notifications (type, message, is_read) VALUES ('new_donation', ?, 0)").run(
                 `${donation.donor_name} donated ₱${Number(donation.amount).toLocaleString("en-PH", { maximumFractionDigits: 0 })} via PayMongo`
             );
-            db.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
+            await tx.prepare("INSERT INTO activity_log (action, details) VALUES (?, ?)").run(
                 "donation_payment_confirmed",
                 `PayMongo payment confirmed for donation #${donation.id} (${checkoutSessionId})`
             );
@@ -90,7 +90,7 @@ router.post("/", async (req, res) => {
 
         if (donation.donor_email) {
             const campaign = donation.campaign_id
-                ? db.prepare("SELECT title FROM campaigns WHERE id = ?").get(donation.campaign_id)
+                ? await db.prepare("SELECT title FROM campaigns WHERE id = ?").get(donation.campaign_id)
                 : null;
 
             try {
@@ -101,12 +101,12 @@ router.post("/", async (req, res) => {
                     donation.id,
                     campaign ? campaign.title : null
                 );
-                db.prepare(
+                await db.prepare(
                     "UPDATE donations SET receipt_email_sent = 1, receipt_email_sent_at = datetime('now') WHERE id = ?"
                 ).run(donation.id);
             } catch (err) {
                 console.warn(`[paymongo-webhook] receipt email failed for donation #${donation.id}: ${err.message}`);
-                db.prepare("UPDATE donations SET receipt_email_error = ? WHERE id = ?").run(err.message, donation.id);
+                await db.prepare("UPDATE donations SET receipt_email_error = ? WHERE id = ?").run(err.message, donation.id);
             }
         }
     } catch (err) {
